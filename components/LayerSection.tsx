@@ -16,69 +16,75 @@ export default function LayerSection({
   if (items.length === 0) {
     return (
       <div className="mb-6">
-        <h3 className="text-lg font-bold text-kg-text mb-3 font-sans-zh tracking-wide">{title}</h3>
-        <p className="text-kg-success font-medium font-sans-zh">{emptyMessage}</p>
+        <h3 className="text-[15px] font-bold text-[var(--kg-text-2)] mb-2 font-sans-zh tracking-wider uppercase">{title}</h3>
+        <p className="text-kg-success font-medium font-sans-zh text-sm">{emptyMessage}</p>
       </div>
     );
   }
 
   const bgClass = layerType === "grammar" ? "bg-[var(--kg-layer1-bg)]" : layerType === "register" ? "bg-[var(--kg-layer2-bg)]" : "bg-[var(--kg-layer3-bg)]";
   const textClass = layerType === "grammar" ? "text-[var(--kg-layer1-text)]" : layerType === "register" ? "text-[var(--kg-layer2-text)]" : "text-[var(--kg-layer3-text)]";
-  const borderClass = layerType === "grammar" ? "border-[var(--kg-layer1-sep)]" : layerType === "register" ? "border-[var(--kg-layer2-sep)]" : "border-[var(--kg-layer3-sep)]";
   const badgeClass = layerType === "grammar" ? "bg-[var(--kg-layer1)]" : layerType === "register" ? "bg-[var(--kg-layer2)]" : "bg-[var(--kg-layer3)]";
+  const strokeColor = layerType === 'grammar' ? 'decoration-[var(--kg-layer1)]' : layerType === 'register' ? 'decoration-[var(--kg-layer2)]' : 'decoration-[var(--kg-layer3)]';
 
   return (
     <div className="mb-8">
-      <h3 className="text-lg font-bold text-kg-text mb-3 font-sans-zh tracking-wide">{title}</h3>
-      <div className="flex flex-col gap-4">
+      <h3 className="text-[15px] font-bold text-kg-text mb-4 font-sans-zh tracking-wider uppercase flex items-center gap-2">
+        <span className={`w-2 h-2 rounded-full ${badgeClass}`}></span>
+        {title}
+      </h3>
+      <div className="flex flex-col border-t border-kg-sep-2">
         {items.map((item, index) => (
-          <div key={index} className={`pl-4 py-4 ${colorClass} bg-kg-bg border border-kg-sep shadow-sm hover:shadow-hover transition-shadow duration-300 ease-snappy rounded-r-xl`}>
-            {/* Original word pill and issue text */}
-            <div className="mb-3">
-              <div className={`inline-block ${badgeClass} text-white font-mono text-[11px] font-bold px-2 py-1 rounded mb-2`}>
+          <div key={index} className="py-5 border-b border-kg-sep-2 last:border-b-0 flex flex-col gap-3">
+            
+            {/* Teacher's correction line: strikethrough -> correction */}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className={`text-[17px] font-sans-jp px-2 py-0.5 rounded-md line-through text-kg-text-3 font-bold bg-kg-bg-2 decoration-[2px] ${strokeColor}`}>
                 {item.original}
-              </div>
-              <p className="text-[17px] font-medium text-kg-text font-sans-zh leading-[1.7]">{item.issue}</p>
+              </span>
+              
+              <span className="text-kg-text-4 font-mono">→</span>
+              
+              {layerType === "grammar" && 'correction' in item && (
+                <span className={`text-[17px] font-sans-jp font-bold px-3 py-0.5 rounded-md ${textClass} ${bgClass}`}>
+                  {item.correction}
+                </span>
+              )}
+
+              {layerType === "register" && 'suggestion' in item && (
+                 <span className={`text-[17px] font-sans-jp font-bold px-3 py-0.5 rounded-md ${textClass} ${bgClass}`}>
+                   {item.suggestion}
+                 </span>
+              )}
+
+              {/* Pragmatics doesn't inherently have a single forced correction, but we grab the first alternative if it's there to show flow */}
+              {layerType === "pragmatics" && 'alternatives' in item && item.alternatives.length > 0 && (
+                <span className={`text-[17px] font-sans-jp font-bold px-3 py-0.5 rounded-md ${textClass} ${bgClass}`}>
+                  {item.alternatives[0].expression}
+                </span>
+              )}
             </div>
 
-            {/* Grammar field */}
-            {layerType === "grammar" && 'correction' in item && (
-              <div className={`mt-3 ${bgClass} border ${borderClass} p-3 rounded-lg`}>
-                <span className="text-[11px] font-mono font-bold text-kg-text-3 block mb-1">CORRECTION</span>
-                <p className={`text-[15px] font-bold ${textClass} font-sans-jp`}>{item.correction}</p>
-              </div>
-            )}
+            {/* Explanation / Issue */}
+            <p className="text-[15px] font-sans-zh text-kg-text-2 leading-[1.8] mt-1 tracking-wide">
+              <span className={`font-bold mr-2 text-[12px] uppercase ${textClass} bg-white px-2 py-0.5 rounded border border-kg-sep-2`}>解析</span>
+              {item.issue}
+            </p>
 
-            {/* Register field */}
-            {layerType === "register" && 'suggestion' in item && (
-              <div className={`mt-3 ${bgClass} border ${borderClass} p-3 rounded-lg`}>
-                <span className="text-[11px] font-mono font-bold text-kg-text-3 block mb-1">SUGGESTION</span>
-                <p className={`text-[15px] ${textClass} font-medium mb-3 font-sans-jp`}>{item.suggestion}</p>
-                
-                <span className="text-[11px] font-mono font-bold text-kg-text-3 block mb-1">ALTERNATIVES</span>
-                <div className="flex flex-col gap-2">
-                  {item.alternatives.map((alt, i) => (
-                    <div key={i} className="flex flex-col sm:flex-row sm:items-baseline sm:gap-3 bg-kg-bg p-2 rounded-md border border-kg-sep">
-                      <span className={`text-[15px] font-bold ${textClass} font-sans-jp`}>{alt.expression}</span>
-                      <span className="text-[13px] text-kg-text-2 font-sans-jp">{alt.context}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Pragmatics field */}
-            {layerType === "pragmatics" && 'alternatives' in item && (
-              <div className={`mt-3 ${bgClass} border ${borderClass} p-3 rounded-lg`}>
-                <span className="text-[11px] font-mono font-bold text-kg-text-3 block mb-1">ALTERNATIVES</span>
-                <div className="flex flex-col gap-2">
-                  {item.alternatives.map((alt, i) => (
-                    <div key={i} className="flex flex-col sm:flex-row sm:items-baseline sm:gap-3 bg-kg-bg p-2 rounded-md border border-kg-sep">
-                      <span className={`text-[15px] font-bold ${textClass} font-sans-jp`}>{alt.expression}</span>
-                      <span className="text-[13px] text-kg-text-2 font-sans-jp">{alt.context}</span>
-                    </div>
-                  ))}
-                </div>
+            {/* Alternatives if available - keeping it simple for MVP */}
+            {layerType !== "grammar" && 'alternatives' in item && item.alternatives.length > (layerType === "pragmatics" ? 1 : 0) && (
+              <div className="mt-2 pl-4 border-l-[3px] border-kg-sep-2 flex flex-col gap-2">
+                <span className="text-[10px] font-mono text-kg-text-4 uppercase tracking-widest font-bold">Alternatives</span>
+                {item.alternatives.slice(layerType === "pragmatics" ? 1 : 0).map((alt, i) => (
+                  <div key={i} className="flex flex-col sm:flex-row sm:items-baseline sm:gap-4">
+                    <span className={`text-[15px] font-medium font-sans-jp ${textClass}`}>
+                      {alt.expression}
+                    </span>
+                    <span className="text-[13px] text-kg-text-3 font-sans-zh">
+                      {alt.context}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>

@@ -6,16 +6,21 @@ interface Props {
 
 export default function NativeVersion({ nativeVersion }: Props) {
   return (
-    <div className="mt-6 bg-kg-bg-2 border border-kg-sep rounded-xl p-6 shadow-sm interaction-lift">
-      <span className="inline-block bg-[var(--kg-text)] text-kg-bg text-[11px] font-bold px-3 py-1.5 rounded-full mb-4 font-sans-jp">
-        母語者版本
-      </span>
-      <p className="text-[20px] font-bold text-kg-text mb-4 whitespace-pre-wrap leading-[1.8] font-sans-jp">
+    <div className="my-10 relative px-6 py-10 md:px-10 md:py-14 bg-white border-y border-kg-sep-2 text-center shadow-sm">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-kg-bg px-4">
+        <span className="text-[11px] uppercase tracking-widest font-mono text-kg-blue font-bold">
+          Native Target
+        </span>
+      </div>
+      
+      <p className="text-3xl md:text-4xl lg:text-[40px] text-kg-text whitespace-pre-wrap leading-[1.7] font-display-jp tracking-wide" style={{ fontWeight: 300 }}>
         {nativeVersion}
       </p>
-      <div className="border-t border-kg-sep pt-3">
-        <p className="text-[13px] text-kg-text-3 font-sans-jp">
-          以上は母語者が自然に言う表現です
+      
+      <div className="mt-8 flex flex-col items-center">
+        <div className="w-10 h-[1px] bg-kg-sep mb-5"></div>
+        <p className="text-[16px] font-display italic text-kg-text-3 tracking-wide">
+          As expressed by a native speaker.
         </p>
       </div>
     </div>

@@ -31,19 +31,30 @@ export default function ClientPage() {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-display-jp font-bold mb-1 tracking-tight text-kg-text">鏡 Kagami</h1>
-      <p className="text-kg-text-3 font-medium text-sm mb-8">日語自然度診断</p>
+      <div className="mb-10 text-center">
+        <h1 className="text-4xl sm:text-5xl font-display text-kg-text mb-2 tracking-tight flex items-baseline justify-center gap-3">
+          <span className="font-display-jp font-light">鏡</span>
+          <span className="italic font-light">Kagami</span>
+        </h1>
+        <p className="text-kg-text-3 text-[13px] tracking-widest uppercase font-mono mt-2">Japanese Naturalness Diagnostic</p>
+      </div>
 
       <InputForm onSubmit={handleSubmit} isLoading={isDiagnosing} />
 
       {error && (
-        <div className="mt-4 p-3 rounded-lg bg-kg-layer1-bg border border-kg-layer1-sep text-kg-layer1-text text-sm font-sans-zh font-medium">
+        <div className="mt-4 p-4 rounded-xl bg-kg-layer1-bg border border-kg-layer1-sep text-kg-layer1-text text-sm font-sans-zh font-medium">
           {error}
         </div>
       )}
 
       {result && (
-        <div className={isDiagnosing ? "mt-8 opacity-50 transition-opacity" : "mt-8 transition-opacity"}>
+        <div className="mt-12 relative">
+          <div
+            className={`absolute z-10 inset-0 pointer-events-none transition-opacity duration-300 ease-in-out ${
+              isDiagnosing ? "opacity-100" : "opacity-0"
+            }`}
+            style={{ background: "rgba(255, 255, 255, 0.85)" }}
+          ></div>
           <DiagnosisResult result={result} />
         </div>
       )}
