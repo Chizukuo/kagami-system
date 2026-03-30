@@ -1,26 +1,259 @@
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Colors - Backgrounds */
+  --color-kg-bg: var(--kg-bg);
+  --color-kg-bg-2: var(--kg-bg-2);
+  --color-kg-bg-3: var(--kg-bg-3);
+
+  /* Colors - Separators */
+  --color-kg-sep: var(--kg-sep);
+  --color-kg-sep-2: var(--kg-sep-2);
+
+  /* Colors - Text */
+  --color-kg-text: var(--kg-text);
+  --color-kg-text-2: var(--kg-text-2);
+  --color-kg-text-3: var(--kg-text-3);
+  --color-kg-text-4: var(--kg-text-4);
+
+  /* Colors - Primary Accent (Apple Blue + Google Interactions) */
+  --color-kg-blue: var(--kg-blue);
+  --color-kg-blue-bg: var(--kg-blue-bg);
+  --color-kg-blue-text: var(--kg-blue-text);
+  --color-kg-blue-hover: var(--kg-blue-hover);
+  --color-kg-blue-pressed: var(--kg-blue-pressed);
+
+  /* Colors - Diagnostic Layers */
+  --color-kg-layer1: var(--kg-layer1);
+  --color-kg-layer1-bg: var(--kg-layer1-bg);
+  --color-kg-layer1-text: var(--kg-layer1-text);
+  --color-kg-layer1-sep: var(--kg-layer1-sep);
+
+  --color-kg-layer2: var(--kg-layer2);
+  --color-kg-layer2-bg: var(--kg-layer2-bg);
+  --color-kg-layer2-text: var(--kg-layer2-text);
+  --color-kg-layer2-sep: var(--kg-layer2-sep);
+
+  --color-kg-layer3: var(--kg-layer3);
+  --color-kg-layer3-bg: var(--kg-layer3-bg);
+  --color-kg-layer3-text: var(--kg-layer3-text);
+  --color-kg-layer3-sep: var(--kg-layer3-sep);
+
+  /* Colors - Status */
+  --color-kg-success: var(--kg-success);
+  --color-kg-success-bg: var(--kg-success-bg);
+  --color-kg-success-text: var(--kg-success-text);
+
+  /* Typography Families */
+  --font-display: var(--kg-font-display-en);
+  --font-display-jp: var(--kg-font-display-jp);
+  --font-display-zh: var(--kg-font-display-zh);
+  --font-sans: var(--kg-font-body-en);
+  --font-sans-jp: var(--kg-font-body-jp);
+  --font-sans-zh: var(--kg-font-body-zh);
+  --font-mono: var(--kg-font-mono);
+
+  /* Font Sizes */
+  --text-large-title: 34px;
+  --text-title-1: 28px;
+  --text-title-2: 22px;
+  --text-title-3: 20px;
+  --text-headline: 17px;
+  --text-body: 17px;
+  --text-callout: 16px;
+  --text-subhead: 15px;
+  --text-footnote: 13px;
+  --text-caption: 12px;
+  --text-mono-label: 11px;
+
+  /* Weights mapped to semantic meanings (ensuring clean typography) */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+
+  /* Line Heights */
+  --text-large-title--line-height: var(--leading-tight);
+  --text-title-1--line-height: var(--leading-tight);
+  --text-headline--line-height: var(--leading-normal);
+  --text-body--line-height: var(--leading-body);
+
+  /* Baseline Grid Spacing (8pt system) */
+  --spacing-sp-1: 4px;
+  --spacing-sp-2: 8px;
+  --spacing-sp-3: 12px;
+  --spacing-sp-4: 16px;
+  --spacing-sp-5: 20px;
+  --spacing-sp-6: 24px;
+  --spacing-sp-8: 32px;
+  --spacing-sp-10: 40px;
+  --spacing-sp-12: 48px;
+  --spacing-sp-16: 64px;
+  --spacing-sp-20: 80px;
+
+  /* Apple Touch Targets */
+  --spacing-touch: 44px;
+
+  /* Border Radii (Layered UI) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* Depth & Interaction (Apple Soft Shadows + Google Lift) */
+  --shadow-sm: var(--kg-shadow-sm);
+  --shadow-md: var(--kg-shadow-md);
+  --shadow-lg: var(--kg-shadow-lg);
+  --shadow-hover: var(--kg-shadow-hover);
+  --shadow-focus: var(--kg-focus-ring);
+
+  /* Motion & Easing Curves */
+  --ease-standard: var(--kg-ease-standard);
+  --ease-apple: var(--kg-ease-apple);
+  --ease-snappy: var(--kg-ease-snappy);
+  --ease-bouncy: var(--kg-ease-bouncy);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  /* ========================================================================= */
+  /* Apple HIG + Google Interaction System (Light Scheme)                      */
+  /* ========================================================================= */
+
+  /* Backgrounds */
+  --kg-bg:       #ffffff;
+  --kg-bg-2:     #f5f5f7;
+  --kg-bg-3:     #e8e8ed;
+
+  /* Separators */
+  --kg-sep:      #d2d2d7;
+  --kg-sep-2:    #e5e5ea;
+
+  /* Text Colors */
+  --kg-text:     #1d1d1f;
+  --kg-text-2:   #515154;
+  --kg-text-3:   #86868b;
+  --kg-text-4:   #aeaeb2;
+
+  /* Primary Accent (Apple System Blue enhanced with Google interaction states) */
+  --kg-blue:         #0071e3;
+  --kg-blue-bg:      #e8f0fb;
+  --kg-blue-text:    #003a8c;
+  --kg-blue-hover:   #0062c3; /* Deeper hover variant */
+  --kg-blue-pressed: #0054a6; /* Affirmative click feedback */
+
+  /* Diagnostic Semantic Layers */
+  --kg-layer1:       #e5484d;
+  --kg-layer1-bg:    #fff0f0;
+  --kg-layer1-text:  #7e191b;
+  --kg-layer1-sep:   rgba(229, 72, 77, 0.2);
+
+  --kg-layer2:       #f76808;
+  --kg-layer2-bg:    #fff3e8;
+  --kg-layer2-text:  #7a2900;
+  --kg-layer2-sep:   rgba(247, 104, 8, 0.2);
+
+  --kg-layer3:       #0c9488;
+  --kg-layer3-bg:    #e6f6f5;
+  --kg-layer3-text:  #00544e;
+  --kg-layer3-sep:   rgba(12, 148, 136, 0.2);
+
+  /* Status */
+  --kg-success:      #34c759;
+  --kg-success-bg:   #f0faf3;
+  --kg-success-text: #1a5e2a;
+
+  /* Typography Font Stacks */
+  --kg-font-display-en: 'Cormorant Garamond', serif;
+  --kg-font-display-jp: 'Noto Serif JP', serif;
+  --kg-font-display-zh: 'Noto Serif SC', serif;
+  --kg-font-body-en: 'Instrument Sans', sans-serif;
+  --kg-font-body-jp: 'BIZ UDPGothic', 'Noto Sans JP', sans-serif;
+  --kg-font-body-zh: 'Noto Sans SC', sans-serif;
+  --kg-font-mono: 'JetBrains Mono', monospace;
+
+  /* Line Heights */
+  --leading-tight:  1.2;
+  --leading-normal: 1.5;
+  --leading-body:   1.7;
+  --leading-jp:     1.8;
+
+  /* Depth Shadows */
+  --kg-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --kg-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --kg-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.06);
+  --kg-shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.12), 0 6px 16px rgba(0, 0, 0, 0.08); /* Hover Lift */
+  
+  --kg-focus-ring: 0 0 0 3px rgba(0, 113, 227, 0.35);
+
+  /* Motion Curves */
+  --kg-ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --kg-ease-apple:    cubic-bezier(0.25, 0.1, 0.25, 1);
+  --kg-ease-snappy:   cubic-bezier(0.2, 0.8, 0.2, 1);
+  --kg-ease-bouncy:   cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* ========================================================================= */
+    /* Apple HIG OLED Black Scheme                                               */
+    /* ========================================================================= */
+
+    --kg-bg:    #000000;
+    --kg-bg-2:  #1c1c1e;
+    --kg-bg-3:  #2c2c2e;
+
+    --kg-sep:   #3a3a3c;
+    --kg-sep-2: #2c2c2e;
+
+    --kg-text:   #f5f5f7;
+    --kg-text-2: #aeaeb2;
+    --kg-text-3: #636366;
+    --kg-text-4: #3a3a3c;
+
+    --kg-blue:         #0a84ff;
+    --kg-blue-bg:      #001f4d;
+    --kg-blue-text:    #5fb3f8;
+    --kg-blue-hover:   #3098ff; /* Gets lighter on hover in dark mode */
+    --kg-blue-pressed: #5cb0ff;
+
+    --kg-layer1:      #ff6166;
+    --kg-layer1-bg:   #2d0a0a;
+    --kg-layer1-text: #ffb3b5;
+    --kg-layer1-sep:  rgba(255, 97, 102, 0.25);
+
+    --kg-layer2:      #ff8c42;
+    --kg-layer2-bg:   #2d1200;
+    --kg-layer2-text: #ffc299;
+    --kg-layer2-sep:  rgba(255, 140, 66, 0.25);
+
+    --kg-layer3:      #2dd4c4;
+    --kg-layer3-bg:   #001f1c;
+    --kg-layer3-text: #81e8df;
+    --kg-layer3-sep:  rgba(45, 212, 196, 0.25);
+
+    --kg-success:      #30d158;
+    --kg-success-bg:   #0a2b14;
+    --kg-success-text: #86e8a3;
+
+    /* Stronger shadows against absolute black */
+    --kg-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --kg-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.2);
+    --kg-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25);
+    --kg-shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.35);
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--kg-bg);
+  color: var(--kg-text);
+  font-family: var(--kg-font-body-en);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer utilities {
+  /* Common helper to apply Google's interactive states seamlessly */
+  .interaction-press {
+    @apply transition-transform hover:scale-[1.01] active:scale-[0.97] duration-150 ease-snappy;
+  }
 }
