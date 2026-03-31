@@ -13,18 +13,33 @@ export default function ClientPage() {
   async function handleSubmit(text: string, scene: string) {
     setIsDiagnosing(true);
     setError(null);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
     try {
       const res = await fetch("/api/diagnose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, scene }),
+        signal: controller.signal,
       });
-      if (!res.ok) throw new Error("API error");
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "API error");
+      }
+
       const data: ResultType = await res.json();
       setResult(data);
-    } catch {
-      setError("診断に失敗しました。もう一度お試しください。");
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        setError("诊断超时，请重试。");
+      } else {
+        setError("诊断失败，请稍后重试。");
+      }
     } finally {
+      clearTimeout(timeout);
       setIsDiagnosing(false);
     }
   }
@@ -50,10 +65,9 @@ export default function ClientPage() {
       {result && (
         <div className="mt-12 relative">
           <div
-            className={`absolute z-10 inset-0 pointer-events-none transition-opacity duration-300 ease-in-out ${
+            className={`absolute z-10 inset-0 pointer-events-none transition-opacity duration-300 ease-in-out bg-kg-bg/85 ${
               isDiagnosing ? "opacity-100" : "opacity-0"
             }`}
-            style={{ background: "rgba(255, 255, 255, 0.85)" }}
           ></div>
           <DiagnosisResult result={result} />
         </div>

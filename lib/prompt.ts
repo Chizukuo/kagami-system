@@ -1,5 +1,3 @@
-import { Schema, SchemaType } from "@google/generative-ai";
-
 // Language pair — hardcoded for MVP, parameterized for future extension
 const L1 = "Chinese";
 const L2 = "Japanese";
@@ -37,68 +35,68 @@ LANGUAGE RULES (strict):
 - If a layer has no issues, return an empty array []
 `.trim();
 
-export const RESPONSE_SCHEMA: Schema = {
-  type: SchemaType.OBJECT,
+export const RESPONSE_SCHEMA = {
+  type: 'OBJECT',
   properties: {
     grammar: {
-      type: SchemaType.ARRAY,
+      type: 'ARRAY',
       items: {
-        type: SchemaType.OBJECT,
+        type: 'OBJECT',
         properties: {
-          original:   { type: SchemaType.STRING },
-          issue:      { type: SchemaType.STRING },
-          correction: { type: SchemaType.STRING },
+          original:   { type: 'STRING' },
+          issue:      { type: 'STRING' },
+          correction: { type: 'STRING' },
         },
-        required: ["original", "issue", "correction"],
+        required: ['original', 'issue', 'correction'],
       },
     },
     register: {
-      type: SchemaType.ARRAY,
+      type: 'ARRAY',
       items: {
-        type: SchemaType.OBJECT,
+        type: 'OBJECT',
         properties: {
-          original:   { type: SchemaType.STRING },
-          issue:      { type: SchemaType.STRING },
-          suggestion: { type: SchemaType.STRING },
+          original:   { type: 'STRING' },
+          issue:      { type: 'STRING' },
+          suggestion: { type: 'STRING' },
           alternatives: {
-            type: SchemaType.ARRAY,
+            type: 'ARRAY',
             items: {
-              type: SchemaType.OBJECT,
+              type: 'OBJECT',
               properties: {
-                expression: { type: SchemaType.STRING },
-                context:    { type: SchemaType.STRING },
+                expression: { type: 'STRING' },
+                context:    { type: 'STRING' },
               },
-              required: ["expression", "context"],
+              required: ['expression', 'context'],
             },
           },
         },
-        required: ["original", "issue", "suggestion", "alternatives"],
+        required: ['original', 'issue', 'suggestion', 'alternatives'],
       },
     },
     pragmatics: {
-      type: SchemaType.ARRAY,
+      type: 'ARRAY',
       items: {
-        type: SchemaType.OBJECT,
+        type: 'OBJECT',
         properties: {
-          original: { type: SchemaType.STRING },
-          issue:    { type: SchemaType.STRING },
+          original: { type: 'STRING' },
+          issue:    { type: 'STRING' },
           alternatives: {
-            type: SchemaType.ARRAY,
+            type: 'ARRAY',
             items: {
-              type: SchemaType.OBJECT,
+              type: 'OBJECT',
               properties: {
-                expression: { type: SchemaType.STRING },
-                context:    { type: SchemaType.STRING },
+                expression: { type: 'STRING' },
+                context:    { type: 'STRING' },
               },
-              required: ["expression", "context"],
+              required: ['expression', 'context'],
             },
           },
         },
-        required: ["original", "issue", "alternatives"],
+        required: ['original', 'issue', 'alternatives'],
       },
     },
-    native_version: { type: SchemaType.STRING },
-    summary:        { type: SchemaType.STRING },
+    native_version: { type: 'STRING' },
+    summary:        { type: 'STRING' },
   },
-  required: ["grammar", "register", "pragmatics", "native_version", "summary"],
+  required: ['grammar', 'register', 'pragmatics', 'native_version', 'summary'],
 };

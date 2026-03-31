@@ -1,24 +1,36 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { SYSTEM_PROMPT, RESPONSE_SCHEMA } from "./prompt";
 import { DiagnosisResult } from "./types";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("[Kagami] GEMINI_API_KEY environment variable is not set");
+}
 
-const model = genAI.getGenerativeModel({
-  model: "gemini-3.1-flash-lite-preview",
-  systemInstruction: SYSTEM_PROMPT,
-  generationConfig: {
-    responseMimeType: "application/json",
-    responseSchema: RESPONSE_SCHEMA,
-  },
-});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function diagnose(
   text: string,
   scene: string
 ): Promise<DiagnosisResult> {
   const userMessage = `文本：${text}\n場面：${scene}`;
-  const result = await model.generateContent(userMessage);
-  const raw = result.response.text();
+
+  const result = await ai.models.generateContent({
+    model: "gemini-3.1-flash-lite-preview",
+    contents: userMessage,
+    config: {
+      systemInstruction: SYSTEM_PROMPT,
+      thinkingConfig: {
+        thinkingLevel: ThinkingLevel.MINIMAL,
+      },
+      responseMimeType: "application/json",
+      responseSchema: RESPONSE_SCHEMA,
+    },
+  });
+
+  const raw = result.text;
+  if (!raw) {
+    throw new Error("Empty response from Gemini");
+  }
+
   return JSON.parse(raw) as DiagnosisResult;
 }

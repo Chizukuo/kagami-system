@@ -11,18 +11,17 @@ export default function InputForm({ onSubmit, isLoading }: Props) {
   const [text, setText] = useState("");
   const [scene, setScene] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim() && scene.trim()) {
-      onSubmit(text, text.trim()); // Wait, this should use scene.trim()
-      // Let me correct that inside the file block.
+      onSubmit(text.trim(), scene.trim());
     }
   };
 
   const isDisabled = isLoading || !text.trim() || !scene.trim();
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); if (text.trim() && scene.trim()) onSubmit(text.trim(), scene.trim()); }} className="flex flex-col gap-5">
+    <form onSubmit={handleFormSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <label htmlFor="text" className="text-[15px] font-medium font-sans-jp text-kg-text-2">日本語のテキスト</label>
         <textarea
@@ -31,6 +30,7 @@ export default function InputForm({ onSubmit, isLoading }: Props) {
           onChange={(e) => setText(e.target.value)}
           disabled={isLoading}
           placeholder="先生、昨日の授業ですが、ちょっとわからないところがあって、聞きたいんですけど。"
+          aria-label="診断したい日本語のテキスト"
           className={`w-full min-h-[120px] p-4 bg-kg-bg border border-kg-sep rounded-xl outline-none focus:ring-0 focus:border-kg-blue focus:shadow-[var(--kg-focus-ring)] transition-all resize-y shadow-sm font-sans-jp text-kg-text placeholder-kg-text-3 ${isLoading ? 'opacity-50 pointer-events-none bg-kg-bg-2' : ''}`}
         />
       </div>
@@ -44,6 +44,7 @@ export default function InputForm({ onSubmit, isLoading }: Props) {
           onChange={(e) => setScene(e.target.value)}
           disabled={isLoading}
           placeholder="大学教授へのメール"
+          aria-label="使用する場面（コンテキスト）"
           className={`w-full p-4 bg-kg-bg border border-kg-sep rounded-xl outline-none focus:ring-0 focus:border-kg-blue focus:shadow-[var(--kg-focus-ring)] transition-all shadow-sm font-sans-jp text-kg-text placeholder-kg-text-3 ${isLoading ? 'opacity-50 pointer-events-none bg-kg-bg-2' : ''}`}
         />
       </div>
@@ -51,6 +52,7 @@ export default function InputForm({ onSubmit, isLoading }: Props) {
       <button
         type="submit"
         disabled={isDisabled}
+        aria-label={isLoading ? "分析中" : "診断する"}
         className="mt-2 w-full min-h-[44px] py-4 bg-kg-blue text-[17px] text-white font-medium rounded-xl shadow-md hover:bg-kg-blue-hover active:bg-kg-blue-pressed disabled:bg-kg-text-4 disabled:cursor-not-allowed interaction-press flex items-center justify-center space-x-2 group"
       >
         {isLoading ? (

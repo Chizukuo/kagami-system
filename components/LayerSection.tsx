@@ -4,20 +4,27 @@ import { GrammarIssue, RegisterIssue, PragmaticsIssue } from "@/lib/types";
 
 interface Props {
   title: string;
-  colorClass: string;
   layerType: "grammar" | "register" | "pragmatics";
   items: GrammarIssue[] | RegisterIssue[] | PragmaticsIssue[];
   emptyMessage: string;
 }
 
 export default function LayerSection({
-  title, colorClass, layerType, items, emptyMessage
+  title, layerType, items, emptyMessage
 }: Props) {
   if (items.length === 0) {
     return (
-      <div className="mb-6">
-        <h3 className="text-[15px] font-bold text-[var(--kg-text-2)] mb-2 font-sans-zh tracking-wider uppercase">{title}</h3>
-        <p className="text-kg-success font-medium font-sans-zh text-sm">{emptyMessage}</p>
+      <div className="mb-8">
+        <h3 className="text-[15px] font-bold text-kg-text mb-3 font-sans-zh tracking-wider uppercase flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full bg-kg-success`}></span>
+          {title}
+        </h3>
+        <div className="bg-kg-success-bg border border-kg-sep-2 rounded-xl p-4">
+          <p className="text-kg-success-text font-medium font-sans-zh text-sm flex items-center gap-2">
+            <span className="text-lg">✓</span>
+            {emptyMessage}
+          </p>
+        </div>
       </div>
     );
   }
@@ -57,7 +64,7 @@ export default function LayerSection({
                  </span>
               )}
 
-              {/* Pragmatics doesn't inherently have a single forced correction, but we grab the first alternative if it's there to show flow */}
+              {/* Pragmatics: Show the first alternative as the primary suggestion */}
               {layerType === "pragmatics" && 'alternatives' in item && item.alternatives.length > 0 && (
                 <span className={`text-[17px] font-sans-jp font-bold px-3 py-0.5 rounded-md ${textClass} ${bgClass}`}>
                   {item.alternatives[0].expression}
@@ -71,11 +78,11 @@ export default function LayerSection({
               {item.issue}
             </p>
 
-            {/* Alternatives if available - keeping it simple for MVP */}
-            {layerType !== "grammar" && 'alternatives' in item && item.alternatives.length > (layerType === "pragmatics" ? 1 : 0) && (
+            {/* Alternatives - Show all for Register and Pragmatics */}
+            {layerType !== "grammar" && 'alternatives' in item && item.alternatives.length > 0 && (
               <div className="mt-2 pl-4 border-l-[3px] border-kg-sep-2 flex flex-col gap-2">
                 <span className="text-[10px] font-mono text-kg-text-4 uppercase tracking-widest font-bold">Alternatives</span>
-                {item.alternatives.slice(layerType === "pragmatics" ? 1 : 0).map((alt, i) => (
+                {item.alternatives.map((alt, i) => (
                   <div key={i} className="flex flex-col sm:flex-row sm:items-baseline sm:gap-4">
                     <span className={`text-[15px] font-medium font-sans-jp ${textClass}`}>
                       {alt.expression}

@@ -30,7 +30,6 @@ export default function DiagnosisResult({ result }: Props) {
         {/* Layers */}
         <LayerSection
           title="Grammar 语法"
-          colorClass="border-kg-layer1"
           layerType="grammar"
           items={result.grammar}
           emptyMessage="✓ 无语法错误"
@@ -38,7 +37,6 @@ export default function DiagnosisResult({ result }: Props) {
 
         <LayerSection
           title="Register 语体"
-          colorClass="border-kg-layer2"
           layerType="register"
           items={result.register}
           emptyMessage="✓ 语体使用恰当"
@@ -46,7 +44,6 @@ export default function DiagnosisResult({ result }: Props) {
 
         <LayerSection
           title="Pragmatics 语用"
-          colorClass="border-kg-layer3"
           layerType="pragmatics"
           items={result.pragmatics}
           emptyMessage="✓ 表达自然"
