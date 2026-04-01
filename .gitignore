@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# OpenNext
+.open-next
+
+# local cloudflare/wrangler runtime state
+.wrangler/
+
+# local development vars (wrangler)
+.dev.vars
+
+# generated css artifact
+out.css
