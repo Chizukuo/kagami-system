@@ -1,15 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   onSubmit: (text: string, scene: string) => void;
   isLoading: boolean;
+  externalText?: string;
+  externalScene?: string;
 }
 
-export default function InputForm({ onSubmit, isLoading }: Props) {
+export default function InputForm({ onSubmit, isLoading, externalText, externalScene }: Props) {
   const [text, setText] = useState("");
   const [scene, setScene] = useState("");
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (externalText !== undefined) setText(externalText);
+  }, [externalText]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (externalScene !== undefined) setScene(externalScene);
+  }, [externalScene]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,11 +40,17 @@ export default function InputForm({ onSubmit, isLoading }: Props) {
           id="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          maxLength={2000}
           disabled={isLoading}
           placeholder="先生、昨日の授業ですが、ちょっとわからないところがあって、聞きたいんですけど。"
           aria-label="診断したい日本語のテキスト"
           className={`w-full min-h-[120px] p-4 bg-kg-bg border border-kg-sep rounded-xl outline-none focus:ring-0 focus:border-kg-blue focus:shadow-[var(--kg-focus-ring)] transition-all resize-y shadow-sm font-sans-jp text-kg-text placeholder-kg-text-3 ${isLoading ? 'opacity-50 pointer-events-none bg-kg-bg-2' : ''}`}
         />
+        <div className="flex justify-end mt-1">
+          <span className={`text-[11px] font-mono tracking-wider ${text.length > 1800 ? 'text-kg-layer1' : 'text-kg-text-4'}`}>
+            {text.length} / 2000
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -42,11 +60,17 @@ export default function InputForm({ onSubmit, isLoading }: Props) {
           type="text"
           value={scene}
           onChange={(e) => setScene(e.target.value)}
+          maxLength={200}
           disabled={isLoading}
           placeholder="大学教授へのメール"
           aria-label="使用する場面（コンテキスト）"
           className={`w-full p-4 bg-kg-bg border border-kg-sep rounded-xl outline-none focus:ring-0 focus:border-kg-blue focus:shadow-[var(--kg-focus-ring)] transition-all shadow-sm font-sans-jp text-kg-text placeholder-kg-text-3 ${isLoading ? 'opacity-50 pointer-events-none bg-kg-bg-2' : ''}`}
         />
+        <div className="flex justify-end mt-1">
+          <span className={`text-[11px] font-mono tracking-wider ${scene.length > 180 ? 'text-kg-layer1' : 'text-kg-text-4'}`}>
+            {scene.length} / 200
+          </span>
+        </div>
       </div>
 
       <button

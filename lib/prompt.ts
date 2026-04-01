@@ -30,8 +30,8 @@ Every issue must include 2–3 entries in the alternatives array,
 showing natural options across different contexts.
 
 LANGUAGE RULES (strict):
-- Fields issue, suggestion, context, summary → write in Chinese
-- Fields original, correction, expression, native_version → write in Japanese
+- Fields issue, context, summary → write in Chinese
+- Fields original, correction, suggestion, expression, native_version → write in Japanese
 - If a layer has no issues, return an empty array []
 `.trim();
 

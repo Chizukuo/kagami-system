@@ -12,7 +12,7 @@ export interface GrammarIssue {
 export interface RegisterIssue {
   original: string;    // Japanese
   issue: string;       // Chinese
-  suggestion: string;  // Chinese
+  suggestion: string;  // Japanese
   alternatives: Alternative[];
 }
 

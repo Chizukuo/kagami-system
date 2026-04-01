@@ -60,7 +60,7 @@ export default function LayerSection({
 
               {layerType === "register" && 'suggestion' in item && (
                  <span className={`text-[17px] font-sans-jp font-bold px-3 py-0.5 rounded-md ${textClass} ${bgClass}`}>
-                   {item.suggestion}
+                   {'alternatives' in item && item.alternatives.length > 0 ? item.alternatives[0].expression : item.suggestion}
                  </span>
               )}
 
@@ -74,7 +74,7 @@ export default function LayerSection({
 
             {/* Explanation / Issue */}
             <p className="text-[15px] font-sans-zh text-kg-text-2 leading-[1.8] mt-1 tracking-wide">
-              <span className={`font-bold mr-2 text-[12px] uppercase ${textClass} bg-white px-2 py-0.5 rounded border border-kg-sep-2`}>解析</span>
+              <span className={`font-bold mr-2 text-[12px] uppercase ${textClass} bg-kg-bg px-2 py-0.5 rounded border border-kg-sep-2`}>解析</span>
               {item.issue}
             </p>
 
