@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "鏡 Kagami",
-  description: "日語自然度診断システム",
+  title: "Kagami 鏡 — 日语自然度诊断系统 | AI 驱动的语用分析工具",
+  description: "专为中文学习者设计的日语诊断工具。从语法、语体、语用三层深度分析，提供地道日语修版建议。。",
   icons: {
     icon: "/kagami-logo.svg",
     shortcut: "/kagami-logo.svg",
@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
         <meta name="theme-color" content="#f4f7fb" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

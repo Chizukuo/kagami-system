@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { getI18n } from "@/lib/i18n";
+import { UILanguage } from "@/lib/types";
 
 interface Props {
   inputText: string;
@@ -9,6 +11,7 @@ interface Props {
   pragmaticsCount: number;
   nativeVersion: string;
   summary: string;
+  lang: UILanguage;
 }
 
 type Rating = "accurate" | "partial" | "inaccurate";
@@ -49,7 +52,9 @@ export default function EvaluationWidget({
   pragmaticsCount,
   nativeVersion,
   summary,
+  lang,
 }: Props) {
+  const t = getI18n(lang);
   const [rating, setRating] = useState<Rating | null>(null);
   const [step, setStep] = useState<1 | 2 | "done">(1);
   const [submitting, setSubmitting] = useState(false);
@@ -61,9 +66,9 @@ export default function EvaluationWidget({
   const [feedbackNote, setFeedbackNote] = useState("");
 
   const ratingLabel: Record<Rating, string> = {
-    accurate: "准确",
-    partial: "部分准确",
-    inaccurate: "不准确",
+    accurate: t.evaluation.accurate,
+    partial: t.evaluation.partial,
+    inaccurate: t.evaluation.inaccurate,
   };
 
   const ratingIcon = {
@@ -95,16 +100,21 @@ export default function EvaluationWidget({
           summary,
           rating: currentRating,
           ...(skipDetails ? {} : { intentMismatch, userCorrection, feedbackNote }),
+          lang,
         }),
       });
 
       if (!res.ok) {
-        throw new Error("反馈提交失败");
+        throw new Error(t.evaluation.submitFailed);
       }
 
       setStep("done");
-    } catch {
-      setSubmitError("提交失败，请稍后重试。");
+    } catch (error) {
+      if (error instanceof Error && error.message) {
+        setSubmitError(error.message);
+      } else {
+        setSubmitError(t.evaluation.submitFailed);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -122,8 +132,8 @@ export default function EvaluationWidget({
         <div className="mx-auto mb-3 w-8 h-8 rounded-full border border-kg-success/35 bg-kg-success-bg flex items-center justify-center text-kg-success">
           <IconCheck className="w-4.5 h-4.5" />
         </div>
-        <p className="text-[14px] text-kg-text-2 font-sans-zh font-medium">反馈已提交</p>
-        <p className="mt-1 text-caption text-kg-text-4 font-sans-zh">感谢你帮助我们持续优化诊断质量。</p>
+        <p className="text-[14px] text-kg-text-2 font-sans-zh font-medium">{t.evaluation.doneTitle}</p>
+        <p className="mt-1 text-caption text-kg-text-4 font-sans-zh">{t.evaluation.doneSubline}</p>
       </div>
     );
   }
@@ -135,7 +145,7 @@ export default function EvaluationWidget({
           <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${ratingToneClass[rating]}`}>
             {ratingIcon[rating]}
           </div>
-          <span className="text-footnote font-sans-zh text-kg-text-3">你的评分</span>
+          <span className="text-footnote font-sans-zh text-kg-text-3">{t.evaluation.yourRating}</span>
           <span className={`px-2.5 py-1 rounded-full border text-caption font-sans-zh font-medium ${ratingToneClass[rating]}`}>
             {ratingLabel[rating]}
           </span>
@@ -149,29 +159,29 @@ export default function EvaluationWidget({
             disabled={submitting}
             className="w-4 h-4 accent-(--kg-blue) cursor-pointer"
           />
-          <span className="text-[14px] font-sans-zh text-kg-text-2">母语版本没有表达我想说的意思</span>
+          <span className="text-[14px] font-sans-zh text-kg-text-2">{t.evaluation.intentMismatch}</span>
         </label>
 
         <div className="flex flex-col gap-1">
-          <label className="text-footnote font-sans-zh text-kg-text-3">您认为更自然的表达是？（选填）</label>
+          <label className="text-footnote font-sans-zh text-kg-text-3">{t.evaluation.betterExpressionLabel}</label>
           <textarea
             value={userCorrection}
             onChange={(e) => setUserCorrection(e.target.value)}
             maxLength={2000}
             disabled={submitting}
-            placeholder="用日语写出您认为更自然的版本..."
+            placeholder={t.evaluation.betterExpressionPlaceholder}
             className="w-full min-h-[80px] p-3 bg-kg-bg border border-kg-sep rounded-lg text-[14px] font-sans-jp text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:shadow-focus transition-all disabled:opacity-60"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-footnote font-sans-zh text-kg-text-3">其他反馈（选填）</label>
+          <label className="text-footnote font-sans-zh text-kg-text-3">{t.evaluation.feedbackLabel}</label>
           <textarea
             value={feedbackNote}
             onChange={(e) => setFeedbackNote(e.target.value)}
             maxLength={500}
             disabled={submitting}
-            placeholder="例如：第二个语体问题我觉得诊断错了..."
+            placeholder={t.evaluation.feedbackPlaceholder}
             className="w-full min-h-15 p-3 bg-kg-bg border border-kg-sep rounded-lg text-[14px] font-sans-zh text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:shadow-focus transition-all disabled:opacity-60"
           />
         </div>
@@ -189,14 +199,14 @@ export default function EvaluationWidget({
             disabled={submitting}
             className="min-w-32 px-5 py-2.5 rounded-lg text-footnote font-sans-zh font-medium bg-kg-blue text-white hover:bg-kg-blue-hover active:bg-kg-blue-pressed disabled:opacity-60 transition-all interaction-press cursor-pointer disabled:cursor-not-allowed"
           >
-            {submitting ? "提交中..." : "提交"}
+            {submitting ? t.evaluation.submitting : t.evaluation.submit}
           </button>
           <button
             onClick={() => setStep(1)}
             disabled={submitting}
             className="min-w-24 px-5 py-2.5 rounded-lg text-footnote font-sans-zh text-kg-text-2 border border-kg-sep hover:bg-kg-bg-2 hover:text-kg-text disabled:opacity-60 transition-all interaction-press cursor-pointer disabled:cursor-not-allowed"
           >
-            返回
+            {t.evaluation.back}
           </button>
         </div>
       </div>
@@ -206,32 +216,32 @@ export default function EvaluationWidget({
   // Step 1
   return (
     <div className="mt-8 pt-6 border-t border-kg-sep-2 flex flex-col items-center gap-4">
-      <p className="text-[14px] text-kg-text-2 font-sans-zh font-medium">这个诊断准确吗？</p>
+      <p className="text-[14px] text-kg-text-2 font-sans-zh font-medium">{t.evaluation.question}</p>
       <div className="flex gap-3 flex-wrap justify-center">
         <button
           onClick={() => handleQuickRate("accurate")}
           className="px-3 py-2 rounded-lg text-footnote font-sans-zh border border-kg-sep hover:border-kg-success hover:bg-kg-success-bg transition-all interaction-press cursor-pointer flex items-center gap-2 text-kg-text hover:text-kg-success"
         >
           <IconCheck className="w-4 h-4" />
-          <span>准确</span>
+          <span>{t.evaluation.accurate}</span>
         </button>
         <button
           onClick={() => handleQuickRate("partial")}
           className="px-3 py-2 rounded-lg text-footnote font-sans-zh border border-kg-sep hover:border-kg-blue hover:bg-kg-blue-bg transition-all interaction-press cursor-pointer flex items-center gap-2 text-kg-text hover:text-kg-blue"
         >
           <IconMinus className="w-4 h-4" />
-          <span>部分准确</span>
+          <span>{t.evaluation.partial}</span>
         </button>
         <button
           onClick={() => handleQuickRate("inaccurate")}
           className="px-3 py-2 rounded-lg text-footnote font-sans-zh border border-kg-sep hover:border-kg-layer1 hover:bg-kg-layer1-bg transition-all interaction-press cursor-pointer flex items-center gap-2 text-kg-text hover:text-kg-layer1"
         >
           <IconX className="w-4 h-4" />
-          <span>不准确</span>
+          <span>{t.evaluation.inaccurate}</span>
         </button>
       </div>
       <p className="text-mono-label text-kg-text-4 font-sans-zh leading-relaxed text-center max-w-xs">
-        提交即表示同意将输入文本和诊断结果匿名用于学术研究
+        {t.evaluation.consent}
       </p>
     </div>
   );

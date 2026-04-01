@@ -1,15 +1,16 @@
 "use client";
 
-import { DiagnosisResult as ResultType } from "@/lib/types";
+import { DiagnosisResult as ResultType, UILanguage } from "@/lib/types";
 import LayerSection from "./LayerSection";
 import NativeVersion from "./NativeVersion";
 import EvaluationWidget from "./EvaluationWidget";
 
 interface Props {
   result: ResultType;
+  lang: UILanguage;
 }
 
-export default function DiagnosisResult({ result }: Props) {
+export default function DiagnosisResult({ result, lang }: Props) {
   const totalIssues = result.grammar.length + result.register.length + result.pragmatics.length;
   
   const severity = totalIssues === 0 
@@ -42,7 +43,7 @@ export default function DiagnosisResult({ result }: Props) {
       </div>
 
       {/* Native Output elevated to the top! */}
-      <NativeVersion nativeVersion={result.native_version} />
+      <NativeVersion nativeVersion={result.native_version} lang={lang} />
 
       <div className="mt-4 flex flex-col gap-6">
         <h2 className="text-[17px] font-display-zh font-bold text-kg-text pb-2 border-b border-kg-sep text-center mb-2">
@@ -55,6 +56,7 @@ export default function DiagnosisResult({ result }: Props) {
           layerType="grammar"
           items={result.grammar}
           emptyMessage="无语法错误"
+          lang={lang}
         />
 
         <LayerSection
@@ -62,6 +64,7 @@ export default function DiagnosisResult({ result }: Props) {
           layerType="register"
           items={result.register}
           emptyMessage="语体使用恰当"
+          lang={lang}
         />
 
         <LayerSection
@@ -69,6 +72,7 @@ export default function DiagnosisResult({ result }: Props) {
           layerType="pragmatics"
           items={result.pragmatics}
           emptyMessage="表达自然"
+          lang={lang}
         />
       </div>
 
@@ -80,6 +84,7 @@ export default function DiagnosisResult({ result }: Props) {
         pragmaticsCount={result.pragmatics.length}
         nativeVersion={result.native_version}
         summary={result.summary}
+        lang={lang}
       />
     </div>
   );

@@ -17,6 +17,7 @@ interface EvalPayload {
   summary: string;
   // Human evaluation
   rating: "accurate" | "partial" | "inaccurate";
+  lang?: "zh" | "ja";
   intentMismatch?: boolean;
   userCorrection?: string;
   feedbackNote?: string;

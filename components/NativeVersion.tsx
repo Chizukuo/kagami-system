@@ -1,15 +1,20 @@
 "use client";
 
+import { getI18n } from "@/lib/i18n";
+import { UILanguage } from "@/lib/types";
+
 interface Props {
   nativeVersion: string;
+  lang: UILanguage;
 }
 
-export default function NativeVersion({ nativeVersion }: Props) {
+export default function NativeVersion({ nativeVersion, lang }: Props) {
+  const t = getI18n(lang);
   return (
     <div className="my-10 relative px-6 py-10 md:px-10 md:py-14 bg-kg-bg border-y border-kg-sep-2 text-center shadow-sm">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-kg-bg px-4">
-        <span className="text-[11px] uppercase tracking-widest font-mono text-kg-blue font-bold">
-          Native Target
+        <span className="text-mono-label uppercase tracking-widest font-mono text-kg-blue font-bold">
+          {t.result.nativeTarget}
         </span>
       </div>
       
@@ -18,9 +23,9 @@ export default function NativeVersion({ nativeVersion }: Props) {
       </p>
       
       <div className="mt-8 flex flex-col items-center">
-        <div className="w-10 h-[1px] bg-kg-sep mb-5"></div>
-        <p className="text-[16px] font-display italic text-kg-text-3 tracking-wide">
-          As expressed by a native speaker.
+        <div className="w-10 h-px bg-kg-sep mb-5"></div>
+        <p className="text-callout font-display italic text-kg-text-3 tracking-wide">
+          {t.result.nativeSubline}
         </p>
       </div>
     </div>

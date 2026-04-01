@@ -1,13 +1,20 @@
-// Language pair — hardcoded for MVP, parameterized for future extension
-const L1 = "Chinese";
-const L2 = "Japanese";
+import type { UILanguage } from "./types";
 
-export const SYSTEM_PROMPT = `
-You are a diagnostic system that helps ${L1} native speakers improve
-the naturalness of their ${L2} output.
+function getAnalysisLanguage(lang: UILanguage): string {
+  return lang === "ja" ? "Japanese" : "Chinese";
+}
+
+export function getSystemPrompt(lang: UILanguage): string {
+  const analysisLanguage = getAnalysisLanguage(lang);
+  const l1 = lang === "ja" ? "Japanese" : "Chinese";
+  const l2 = "Japanese";
+
+  return `
+You are a diagnostic system that helps ${l1} native speakers improve
+the naturalness of their ${l2} output.
 
 The user provides:
-1. A piece of ${L2} text
+1. A piece of ${l2} text
 2. A usage context or scene description
 
 Diagnose the input across three layers:
@@ -30,10 +37,11 @@ Every issue must include 2–3 entries in the alternatives array,
 showing natural options across different contexts.
 
 LANGUAGE RULES (strict):
-- Fields issue, context, summary → write in Chinese
+- Fields issue, context, summary → write in ${analysisLanguage}
 - Fields original, correction, suggestion, expression, native_version → write in Japanese
 - If a layer has no issues, return an empty array []
 `.trim();
+}
 
 export const RESPONSE_SCHEMA = {
   type: 'OBJECT',

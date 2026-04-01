@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InputForm from "@/components/InputForm";
 import DiagnosisResult from "@/components/DiagnosisResult";
-import { DiagnosisResult as ResultType } from "@/lib/types";
+import { DiagnosisResult as ResultType, UILanguage } from "@/lib/types";
+import { getI18n, isSupportedLanguage } from "@/lib/i18n";
 
 // Flat icon for alerts
 const IconAlertCircle = ({ className = "w-4 h-4" }) => (
@@ -16,11 +17,30 @@ const IconAlertCircle = ({ className = "w-4 h-4" }) => (
 );
 
 export default function ClientPage() {
+  const [lang, setLang] = useState<UILanguage>("zh");
   const [result, setResult] = useState<ResultType | null>(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prefillText, setPrefillText] = useState("");
   const [prefillScene, setPrefillScene] = useState("");
+  const t = getI18n(lang);
+
+  useEffect(() => {
+    const savedLang = window.localStorage.getItem("kagami.lang");
+    if (isSupportedLanguage(savedLang)) {
+      setLang(savedLang);
+      return;
+    }
+
+    const browserLang = navigator.language.toLowerCase();
+    if (browserLang.startsWith("ja")) {
+      setLang("ja");
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("kagami.lang", lang);
+  }, [lang]);
 
   async function handleSubmit(text: string, scene: string) {
     setIsDiagnosing(true);
@@ -33,7 +53,7 @@ export default function ClientPage() {
       const res = await fetch("/api/diagnose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, scene }),
+        body: JSON.stringify({ text, scene, lang }),
         signal: controller.signal,
       });
 
@@ -48,9 +68,11 @@ export default function ClientPage() {
       setResult(data);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        setError("诊断超时，请重试。");
+        setError(t.timeoutError);
+      } else if (err instanceof Error && err.message) {
+        setError(err.message);
       } else {
-        setError("诊断失败，请稍后重试。");
+        setError(t.diagnoseError);
       }
     } finally {
       clearTimeout(timeout);
@@ -65,6 +87,26 @@ export default function ClientPage() {
     <div className="pointer-events-none absolute -bottom-32 -left-24 w-105 h-105 rounded-full bg-[radial-gradient(circle,var(--kg-layer3-bg)_0%,transparent_72%)] opacity-60" />
     <main className="max-w-2xl mx-auto w-full flex-1 flex flex-col" style={{ paddingLeft: 'max(1rem, var(--safe-area-inset-left))', paddingRight: 'max(1rem, var(--safe-area-inset-right))', paddingTop: 'max(2rem, calc(2rem + var(--safe-area-inset-top)))', paddingBottom: 'max(2rem, calc(2rem + var(--safe-area-inset-bottom)))' }}>
       <div className="mb-12 sm:mb-16 text-center">
+        <div className="mb-4 flex items-center justify-center gap-3">
+          <span className="text-mono-label text-kg-text-4 font-mono tracking-widest uppercase">{t.languageLabel}</span>
+          <div className="inline-flex rounded-md border border-kg-sep overflow-hidden bg-kg-bg-2">
+            <button
+              type="button"
+              onClick={() => setLang("zh")}
+              className={`px-2.5 py-1 text-caption font-sans-zh transition-all ${lang === "zh" ? "bg-kg-blue text-white shadow-md" : "text-kg-text-2 hover:bg-kg-bg active:bg-kg-bg-3"}`}
+            >
+              中文
+            </button>
+            <div className="w-px bg-kg-sep" />
+            <button
+              type="button"
+              onClick={() => setLang("ja")}
+              className={`px-2.5 py-1 text-caption font-sans-jp transition-all ${lang === "ja" ? "bg-kg-blue text-white shadow-md" : "text-kg-text-2 hover:bg-kg-bg active:bg-kg-bg-3"}`}
+            >
+              日本語
+            </button>
+          </div>
+        </div>
         <div className="flex items-center justify-center gap-2.5 mb-3">
           <Image
             src="/kagami-logo.svg"
@@ -80,10 +122,10 @@ export default function ClientPage() {
           </h1>
         </div>
         <p className="text-kg-text-3 text-footnote tracking-widest uppercase font-mono mb-2.5">
-          Japanese Naturalness Diagnostic
+          {t.appTagline}
         </p>
         <p className="text-kg-text-3 text-footnote sm:text-subhead font-display-jp" style={{ fontWeight: 300 }}>
-          日本語の自然さを映す鏡
+          {t.appSubline}
         </p>
       </div>
 
@@ -92,6 +134,7 @@ export default function ClientPage() {
         isLoading={isDiagnosing}
         externalText={prefillText}
         externalScene={prefillScene}
+        lang={lang}
       />
 
       {error && (
@@ -106,7 +149,7 @@ export default function ClientPage() {
               onClick={() => setError(null)}
               className="text-footnote text-kg-blue hover:text-kg-blue-hover font-medium font-sans-zh transition-colors self-start cursor-pointer"
             >
-              关闭
+              {t.close}
             </button>
           </div>
         </div>
@@ -120,10 +163,10 @@ export default function ClientPage() {
             <div className="flex flex-col gap-4">
               <div>
                 <p className="text-kg-text-2 text-subhead sm:text-callout font-sans-zh font-medium leading-relaxed mb-1.5">
-                  输入日语文本
+                  {t.emptyTitle}
                 </p>
                 <p className="text-kg-text-3 text-footnote font-sans-zh leading-relaxed">
-                  获取语法、语体、语用诊断
+                  {t.emptySubtitle}
                 </p>
               </div>
             </div>
@@ -136,7 +179,7 @@ export default function ClientPage() {
               }}
               className="px-4 py-3 rounded-lg bg-kg-blue/5 border border-kg-blue/30 text-kg-blue hover:bg-kg-blue/10 hover:border-kg-blue/40 text-footnote font-medium font-sans-zh transition-all interaction-press cursor-pointer"
             >
-              查看示例
+              {t.exampleButton}
             </button>
           </div>
         </div>
@@ -151,21 +194,23 @@ export default function ClientPage() {
           >
             <div className="flex flex-col items-center gap-3">
               <div className="w-5 h-5 border-2 border-kg-sep border-t-kg-blue rounded-full animate-spin"></div>
-              <span className="text-caption font-mono text-kg-text-3 tracking-wider uppercase">分析中</span>
+              <span className="text-caption font-mono text-kg-text-3 tracking-wider uppercase">{t.loading}</span>
             </div>
           </div>
-          <DiagnosisResult result={result} />
+          <DiagnosisResult result={result} lang={lang} />
         </div>
       )}
     </main>
     <footer className="border-t border-kg-sep-2 py-8 mt-20" style={{ paddingLeft: 'max(1rem, var(--safe-area-inset-left))', paddingRight: 'max(1rem, var(--safe-area-inset-right))', paddingBottom: 'max(2rem, calc(2rem + var(--safe-area-inset-bottom)))' }}>
       <div className="max-w-2xl mx-auto flex flex-col items-center gap-2">
         <p className="text-caption text-kg-text-4 font-mono tracking-wider">
-          鏡 Kagami — Japanese Naturalness Diagnostic
+          {t.footer}
         </p>
-        <p className="text-mono-label text-kg-text-4 font-mono">
-          Powered by Gemini · Built for NAIST NLP Lab
-        </p>
+        {t.footerSubline && (
+          <p className="text-mono-label text-kg-text-4 font-mono">
+            {t.footerSubline}
+          </p>
+        )}
       </div>
     </footer>
     </div>
