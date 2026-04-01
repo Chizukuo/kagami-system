@@ -221,6 +221,20 @@
   --safe-area-inset-right: max(0px, env(safe-area-inset-right));
 }
 
+html {
+  background-color: var(--kg-bg);
+}
+
+body {
+  background-color: var(--kg-bg);
+}
+
+/* Safe Area Padding Utilities */
+.safe-area-px {
+  padding-left: max(1rem, var(--safe-area-inset-left));
+  padding-right: max(1rem, var(--safe-area-inset-right));
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     /* ========================================================================= */
@@ -310,6 +324,11 @@ body {
   .safe-area-pad-x {
     padding-left: var(--safe-area-inset-left);
     padding-right: var(--safe-area-inset-right);
+  }
+
+  .safe-area-gutter-x {
+    padding-left: calc(1rem + var(--safe-area-inset-left));
+    padding-right: calc(1rem + var(--safe-area-inset-right));
   }
 
   .safe-area-pad-y {

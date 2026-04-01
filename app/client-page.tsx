@@ -63,7 +63,7 @@ export default function ClientPage() {
     <div className="min-h-screen flex flex-col relative overflow-hidden">
     <div className="pointer-events-none absolute -top-24 -right-20 w-90 h-90 rounded-full bg-[radial-gradient(circle,var(--kg-blue-bg)_0%,transparent_72%)] opacity-70" />
     <div className="pointer-events-none absolute -bottom-32 -left-24 w-105 h-105 rounded-full bg-[radial-gradient(circle,var(--kg-layer3-bg)_0%,transparent_72%)] opacity-60" />
-    <main className="max-w-2xl mx-auto w-full px-4 py-8 sm:py-12 safe-area-pad-x flex-1 flex flex-col" style={{ paddingTop: 'max(2rem, calc(2rem + var(--safe-area-inset-top)))', paddingBottom: 'max(2rem, calc(2rem + var(--safe-area-inset-bottom)))' }}>
+    <main className="max-w-2xl mx-auto w-full flex-1 flex flex-col" style={{ paddingLeft: 'max(1rem, var(--safe-area-inset-left))', paddingRight: 'max(1rem, var(--safe-area-inset-right))', paddingTop: 'max(2rem, calc(2rem + var(--safe-area-inset-top)))', paddingBottom: 'max(2rem, calc(2rem + var(--safe-area-inset-bottom)))' }}>
       <div className="mb-12 sm:mb-16 text-center">
         <div className="flex items-center justify-center gap-2.5 mb-3">
           <Image
@@ -158,8 +158,8 @@ export default function ClientPage() {
         </div>
       )}
     </main>
-    <footer className="border-t border-kg-sep-2 py-8 mt-20">
-      <div className="max-w-2xl mx-auto px-4 flex flex-col items-center gap-2">
+    <footer className="border-t border-kg-sep-2 py-8 mt-20" style={{ paddingLeft: 'max(1rem, var(--safe-area-inset-left))', paddingRight: 'max(1rem, var(--safe-area-inset-right))', paddingBottom: 'max(2rem, calc(2rem + var(--safe-area-inset-bottom)))' }}>
+      <div className="max-w-2xl mx-auto flex flex-col items-center gap-2">
         <p className="text-caption text-kg-text-4 font-mono tracking-wider">
           鏡 Kagami — Japanese Naturalness Diagnostic
         </p>
