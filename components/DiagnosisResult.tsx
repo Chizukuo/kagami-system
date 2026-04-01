@@ -54,21 +54,21 @@ export default function DiagnosisResult({ result }: Props) {
           title="Grammar 语法"
           layerType="grammar"
           items={result.grammar}
-          emptyMessage="✓ 无语法错误"
+          emptyMessage="无语法错误"
         />
 
         <LayerSection
           title="Register 语体"
           layerType="register"
           items={result.register}
-          emptyMessage="✓ 语体使用恰当"
+          emptyMessage="语体使用恰当"
         />
 
         <LayerSection
           title="Pragmatics 语用"
           layerType="pragmatics"
           items={result.pragmatics}
-          emptyMessage="✓ 表达自然"
+          emptyMessage="表达自然"
         />
       </div>
 

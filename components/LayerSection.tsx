@@ -21,7 +21,7 @@ export default function LayerSection({
         </h3>
         <div className="bg-kg-success-bg border border-kg-sep-2 rounded-xl p-4">
           <p className="text-kg-success-text font-medium font-sans-zh text-sm flex items-center gap-2">
-            <span className="text-lg">✓</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="w-4 h-4" xmlns="http://www.w3.org/2000/svg"><polyline points="20 6 9 17 4 12"></polyline></svg>
             {emptyMessage}
           </p>
         </div>

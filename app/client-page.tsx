@@ -5,6 +5,15 @@ import InputForm from "@/components/InputForm";
 import DiagnosisResult from "@/components/DiagnosisResult";
 import { DiagnosisResult as ResultType } from "@/lib/types";
 
+// Flat icon for alerts
+const IconAlertCircle = ({ className = "w-4 h-4" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={className}>
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="12" y1="8" x2="12" y2="12"></line>
+    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+  </svg>
+);
+
 export default function ClientPage() {
   const [result, setResult] = useState<ResultType | null>(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
@@ -50,15 +59,17 @@ export default function ClientPage() {
 
   return (
     <>
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+    <div className="pointer-events-none absolute -top-24 -right-20 w-90 h-90 rounded-full bg-[radial-gradient(circle,var(--kg-blue-bg)_0%,transparent_72%)] opacity-70" />
+    <div className="pointer-events-none absolute -bottom-32 -left-24 w-105 h-105 rounded-full bg-[radial-gradient(circle,var(--kg-layer3-bg)_0%,transparent_72%)] opacity-60" />
     <main className="max-w-2xl mx-auto w-full px-4 py-12 flex-1">
       <div className="mb-10 text-center">
         <h1 className="text-4xl sm:text-5xl font-display text-kg-text mb-2 tracking-tight flex items-baseline justify-center gap-3">
           <span className="font-display-jp font-light">鏡</span>
           <span className="italic font-light">Kagami</span>
         </h1>
-        <p className="text-kg-text-3 text-[13px] tracking-widest uppercase font-mono mt-2">Japanese Naturalness Diagnostic</p>
-        <p className="text-kg-text-3 text-[15px] font-display-jp mt-1" style={{ fontWeight: 300 }}>
+        <p className="text-kg-text-3 text-footnote tracking-widest uppercase font-mono mt-2">Japanese Naturalness Diagnostic</p>
+        <p className="text-kg-text-3 text-subhead font-display-jp mt-1" style={{ fontWeight: 300 }}>
           日本語の自然さを映す鏡
         </p>
       </div>
@@ -71,16 +82,16 @@ export default function ClientPage() {
       />
 
       {error && (
-        <div className="mt-6 p-5 rounded-xl bg-kg-layer1-bg border border-kg-layer1-sep flex items-start gap-3">
-          <span className="text-kg-layer1 text-lg mt-0.5 shrink-0">⚠</span>
+        <div className="mt-6 p-5 rounded-xl bg-kg-layer1-bg border border-kg-layer1-sep flex items-start gap-3 shadow-sm" aria-live="assertive">
+          <IconAlertCircle className="w-5 h-5 mt-0.5 shrink-0 text-kg-layer1" />
           <div className="flex flex-col gap-2">
-            <p className="text-kg-layer1-text text-[15px] font-sans-zh font-medium leading-relaxed">
+            <p className="text-kg-layer1-text text-subhead font-sans-zh font-medium leading-relaxed">
               {error}
             </p>
             <button 
               type="button"
               onClick={() => setError(null)}
-              className="text-[13px] text-kg-blue hover:text-kg-blue-hover font-medium font-sans-zh transition-colors self-start cursor-pointer"
+              className="text-footnote text-kg-blue hover:text-kg-blue-hover font-medium font-sans-zh transition-colors self-start cursor-pointer"
             >
               关闭
             </button>
@@ -92,23 +103,23 @@ export default function ClientPage() {
         <div className="mt-20 text-center flex flex-col items-center gap-6">
           <div className="text-8xl font-display-jp opacity-[0.06] select-none leading-none" style={{ fontWeight: 300 }}>鏡</div>
           <div className="flex flex-col gap-3 max-w-sm">
-            <p className="text-kg-text-2 text-[16px] font-sans-zh font-medium">
+            <p className="text-kg-text-2 text-callout font-sans-zh font-medium">
               输入日语文本，获取自然度诊断
             </p>
-            <p className="text-kg-text-3 text-[13px] font-sans-zh leading-relaxed">
+            <p className="text-kg-text-3 text-footnote font-sans-zh leading-relaxed">
               语法 · 语体 · 语用 三层诊断
             </p>
           </div>
-          <div className="w-8 h-[1px] bg-kg-sep"></div>
+          <div className="w-8 h-px bg-kg-sep"></div>
           <button
             type="button"
             onClick={() => {
               setPrefillText("先生、昨日の授業ですが、ちょっとわからないところがあって、聞きたいんですけど。");
               setPrefillScene("大学教授へのメール");
             }}
-            className="text-[13px] text-kg-blue hover:text-kg-blue-hover font-medium font-sans-zh transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-lg border border-kg-sep text-footnote text-kg-blue hover:text-kg-blue-hover hover:border-kg-blue/40 hover:bg-kg-blue-bg font-medium font-sans-zh transition-all interaction-press cursor-pointer"
           >
-            ✦ 点击加载示例，试试看
+            加载示例并体验诊断
           </button>
         </div>
       )}
@@ -122,7 +133,7 @@ export default function ClientPage() {
           >
             <div className="flex flex-col items-center gap-3">
               <div className="w-5 h-5 border-2 border-kg-sep border-t-kg-blue rounded-full animate-spin"></div>
-              <span className="text-[12px] font-mono text-kg-text-3 tracking-wider uppercase">分析中</span>
+              <span className="text-caption font-mono text-kg-text-3 tracking-wider uppercase">分析中</span>
             </div>
           </div>
           <DiagnosisResult result={result} />
@@ -131,10 +142,10 @@ export default function ClientPage() {
     </main>
     <footer className="border-t border-kg-sep-2 py-8 mt-20">
       <div className="max-w-2xl mx-auto px-4 flex flex-col items-center gap-2">
-        <p className="text-[12px] text-kg-text-4 font-mono tracking-wider">
+        <p className="text-caption text-kg-text-4 font-mono tracking-wider">
           鏡 Kagami — Japanese Naturalness Diagnostic
         </p>
-        <p className="text-[11px] text-kg-text-4 font-mono">
+        <p className="text-mono-label text-kg-text-4 font-mono">
           Powered by Gemini · Built for NAIST NLP Lab
         </p>
       </div>

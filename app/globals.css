@@ -245,10 +245,18 @@
 
 body {
   background-color: var(--kg-bg);
+  background-image:
+    radial-gradient(circle at 12% 10%, color-mix(in srgb, var(--kg-blue-bg) 82%, transparent) 0%, transparent 44%),
+    radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--kg-layer3-bg) 86%, transparent) 0%, transparent 42%);
   color: var(--kg-text);
   font-family: var(--kg-font-body-en);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--kg-blue) 22%, transparent);
+  color: var(--kg-text);
 }
 
 @keyframes fadeInUp {
@@ -256,9 +264,18 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes softPulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--kg-blue) 22%, transparent); }
+  100% { box-shadow: 0 0 0 10px transparent; }
+}
+
 @layer utilities {
   /* Common helper to apply Google's interactive states seamlessly */
   .interaction-press {
     @apply transition-transform hover:scale-[1.01] active:scale-[0.97] duration-150 ease-snappy;
+  }
+
+  .pulse-soft {
+    animation: softPulse 1.4s var(--kg-ease-standard) infinite;
   }
 }
