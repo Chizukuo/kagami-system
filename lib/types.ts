@@ -28,6 +28,9 @@ export interface DiagnosisResult {
   pragmatics: PragmaticsIssue[];
   native_version: string; // Japanese
   summary: string;        // Chinese
+  // Client-side only -- not from API
+  _inputText?: string;
+  _inputScene?: string;
 }
 
 export interface DiagnoseRequest {

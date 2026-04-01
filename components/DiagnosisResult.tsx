@@ -3,6 +3,7 @@
 import { DiagnosisResult as ResultType } from "@/lib/types";
 import LayerSection from "./LayerSection";
 import NativeVersion from "./NativeVersion";
+import EvaluationWidget from "./EvaluationWidget";
 
 interface Props {
   result: ResultType;
@@ -70,6 +71,16 @@ export default function DiagnosisResult({ result }: Props) {
           emptyMessage="✓ 表达自然"
         />
       </div>
+
+      <EvaluationWidget
+        inputText={result._inputText ?? ""}
+        inputScene={result._inputScene ?? ""}
+        grammarCount={result.grammar.length}
+        registerCount={result.register.length}
+        pragmaticsCount={result.pragmatics.length}
+        nativeVersion={result.native_version}
+        summary={result.summary}
+      />
     </div>
   );
 }

@@ -33,6 +33,8 @@ export default function ClientPage() {
       }
 
       const data: ResultType = await res.json();
+      data._inputText = text;
+      data._inputScene = scene;
       setResult(data);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {

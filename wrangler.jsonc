@@ -18,5 +18,11 @@
 			"binding": "WORKER_SELF_REFERENCE",
 			"service": "kagami-system"
 		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "KAGAMI_EVAL",
+			"id": "3551caafbb4c4723bd17e23075ab9b0e"
+		}
 	]
 }
