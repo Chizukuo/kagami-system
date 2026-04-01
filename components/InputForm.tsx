@@ -33,28 +33,33 @@ export default function InputForm({ onSubmit, isLoading, externalText, externalS
   const isDisabled = isLoading || !text.trim() || !scene.trim();
 
   return (
-    <form onSubmit={handleFormSubmit} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
-        <label htmlFor="text" className="text-[15px] font-medium font-sans-jp text-kg-text-2">日本語のテキスト</label>
+    <form onSubmit={handleFormSubmit} className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <label htmlFor="text" className="text-subhead font-medium font-sans-jp text-kg-text-2">日本語のテキスト</label>
+          <span className={`text-caption font-mono tracking-wider transition-colors ${text.length > 1800 ? 'text-kg-layer2' : text.length > 1500 ? 'text-kg-text-4' : 'text-kg-text-4'}`}>
+            {text.length} / 2000
+          </span>
+        </div>
         <textarea
           id="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={2000}
           disabled={isLoading}
-          placeholder="先生、昨日の授業ですが、ちょっとわからないところがあって、聞きたいんですけど。"
+          placeholder="先生、昨日の授業ですが、ちょっとわかわからないところがあって、聞きたいんですけど。"
           aria-label="診断したい日本語のテキスト"
-          className={`w-full min-h-[120px] p-4 bg-kg-bg border border-kg-sep rounded-xl outline-none focus:ring-0 focus:border-kg-blue focus:shadow-[var(--kg-focus-ring)] transition-all resize-y shadow-sm font-sans-jp text-kg-text placeholder-kg-text-3 ${isLoading ? 'opacity-50 pointer-events-none bg-kg-bg-2' : ''}`}
+          className={`w-full min-h-35 p-4 bg-kg-bg border border-kg-sep rounded-xl outline-none focus:ring-0 focus:border-kg-blue focus:shadow-focus transition-all resize-none shadow-sm font-sans-jp text-subhead text-kg-text placeholder-kg-text-3 ${isLoading ? 'opacity-50 pointer-events-none bg-kg-bg-2' : ''}`}
         />
-        <div className="flex justify-end mt-1">
-          <span className={`text-[11px] font-mono tracking-wider ${text.length > 1800 ? 'text-kg-layer1' : 'text-kg-text-4'}`}>
-            {text.length} / 2000
-          </span>
-        </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="scene" className="text-[15px] font-medium font-sans-jp text-kg-text-2">使用する場面（コンテキスト）</label>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <label htmlFor="scene" className="text-subhead font-medium font-sans-jp text-kg-text-2">場面（コンテキスト）</label>
+          <span className={`text-caption font-mono tracking-wider transition-colors ${scene.length > 180 ? 'text-kg-layer2' : scene.length > 150 ? 'text-kg-text-4' : 'text-kg-text-4'}`}>
+            {scene.length} / 200
+          </span>
+        </div>
         <input
           id="scene"
           type="text"
@@ -64,20 +69,15 @@ export default function InputForm({ onSubmit, isLoading, externalText, externalS
           disabled={isLoading}
           placeholder="大学教授へのメール"
           aria-label="使用する場面（コンテキスト）"
-          className={`w-full p-4 bg-kg-bg border border-kg-sep rounded-xl outline-none focus:ring-0 focus:border-kg-blue focus:shadow-[var(--kg-focus-ring)] transition-all shadow-sm font-sans-jp text-kg-text placeholder-kg-text-3 ${isLoading ? 'opacity-50 pointer-events-none bg-kg-bg-2' : ''}`}
+          className={`w-full p-4 bg-kg-bg border border-kg-sep rounded-xl outline-none focus:ring-0 focus:border-kg-blue focus:shadow-focus transition-all shadow-sm font-sans-jp text-subhead text-kg-text placeholder-kg-text-3 ${isLoading ? 'opacity-50 pointer-events-none bg-kg-bg-2' : ''}`}
         />
-        <div className="flex justify-end mt-1">
-          <span className={`text-[11px] font-mono tracking-wider ${scene.length > 180 ? 'text-kg-layer1' : 'text-kg-text-4'}`}>
-            {scene.length} / 200
-          </span>
-        </div>
       </div>
 
       <button
         type="submit"
         disabled={isDisabled}
         aria-label={isLoading ? "分析中" : "診断する"}
-        className="mt-2 w-full min-h-[44px] py-4 bg-kg-blue text-[17px] text-white font-medium rounded-xl shadow-md hover:bg-kg-blue-hover active:bg-kg-blue-pressed disabled:bg-kg-text-4 disabled:cursor-not-allowed interaction-press flex items-center justify-center space-x-2 group"
+        className="mt-4 w-full min-h-touch py-4 bg-kg-blue text-subhead sm:text-headline text-white font-medium rounded-xl shadow-md hover:bg-kg-blue-hover active:bg-kg-blue-pressed disabled:bg-kg-text-4 disabled:cursor-not-allowed interaction-press flex items-center justify-center space-x-2 group"
       >
         {isLoading ? (
           <>
