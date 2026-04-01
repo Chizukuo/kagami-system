@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
+interface KvBinding {
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+}
+
 interface EvalPayload {
   // Input
   inputText: string;
@@ -32,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { env } = getCloudflareContext();
-    const kv = (env as Record<string, unknown>).KAGAMI_EVAL as KVNamespace;
+    const kv = (env as Record<string, unknown>).KAGAMI_EVAL as KvBinding;
     const key = `eval_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
     const record = {
