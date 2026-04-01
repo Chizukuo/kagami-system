@@ -1,0 +1,28 @@
+# Robots.txt for Kagami System
+# https://kagami.chizunet.cc/
+
+User-agent: *
+Allow: /
+Disallow: /.next/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /__next/
+Crawl-delay: 1
+
+# Google Bot
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bing Bot
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Baidu Bot
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 1
+
+# Sitemap declaration
+Sitemap: https://kagami.chizunet.cc/sitemap.xml

@@ -1,0 +1,29 @@
+{
+  "name": "Kagami - 日语自然度诊断系统",
+  "short_name": "Kagami",
+  "description": "专为中文母语者设计的日语自然度诊断工具。从语法、语体、语用三个层面深度分析日语表达，帮助学习者写出地道、得体的日语。",
+  "start_url": "https://kagami.chizunet.cc/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "prefer_related_applications": false,
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/kagami-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "开始诊断",
+      "short_name": "诊断",
+      "description": "打开 Kagami 并开始日语自然度诊断",
+      "url": "/"
+    }
+  ]
+}
