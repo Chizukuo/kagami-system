@@ -33,6 +33,7 @@ export interface DiagnosisResult {
   // Client-side only -- not from API
   _inputText?: string;
   _inputScene?: string;
+  _resId?: string;
 }
 
 export interface DiagnoseRequest {

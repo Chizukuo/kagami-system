@@ -65,6 +65,7 @@ export default function ClientPage() {
       const data: ResultType = await res.json();
       data._inputText = text;
       data._inputScene = scene;
+      data._resId = Date.now().toString(36) + Math.random().toString(36).slice(2);
       setResult(data);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
@@ -186,7 +187,7 @@ export default function ClientPage() {
       )}
 
       {result && (
-        <div className="mt-8 sm:mt-12 relative" key={result.summary} style={{ animation: "fadeInUp 0.5s ease-out" }}>
+        <div className="mt-8 sm:mt-12 relative" key={result._resId || result.summary} style={{ animation: "fadeInUp 0.5s ease-out" }}>
           <div
             className={`absolute z-10 inset-0 pointer-events-none transition-opacity duration-300 ease-in-out bg-kg-bg/80 backdrop-blur-sm flex items-center justify-center ${
               isDiagnosing ? "opacity-100" : "opacity-0"

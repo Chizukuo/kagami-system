@@ -56,7 +56,7 @@ export default function EvaluationWidget({
 }: Props) {
   const t = getI18n(lang);
   const [rating, setRating] = useState<Rating | null>(null);
-  const [step, setStep] = useState<1 | 2 | "done">(1);
+  const [step, setStep] = useState<1 | "saved" | 2 | "done">(1);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -83,6 +83,15 @@ export default function EvaluationWidget({
     inaccurate: "text-kg-layer1 border-kg-layer1-sep bg-kg-layer1-bg",
   };
 
+  const quickRateButtonClass: Record<Rating, string> = {
+    accurate: "hover:bg-kg-success-bg hover:text-kg-success hover:border-kg-success/30",
+    partial: "hover:bg-kg-blue-bg hover:text-kg-blue hover:border-kg-blue/30",
+    inaccurate: "hover:bg-kg-layer1-bg hover:text-kg-layer1 hover:border-kg-layer1/30",
+  };
+
+  const textareaBaseClass =
+    "w-full min-h-[96px] p-3.5 bg-kg-bg border border-kg-sep rounded-xl text-[14px] text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:ring-1 focus:ring-kg-blue/30 transition-all disabled:opacity-60";
+
   const submitEval = async (currentRating: Rating, skipDetails = false) => {
     setSubmitting(true);
     setSubmitError(null);
@@ -108,7 +117,7 @@ export default function EvaluationWidget({
         throw new Error(t.evaluation.submitFailed);
       }
 
-      setStep("done");
+      setStep(skipDetails ? "saved" : "done");
     } catch (error) {
       if (error instanceof Error && error.message) {
         setSubmitError(error.message);
@@ -122,89 +131,147 @@ export default function EvaluationWidget({
 
   const handleQuickRate = (r: Rating) => {
     setRating(r);
-    // If "accurate" — likely no detail needed, but still show Step 2
+    submitEval(r, true);
+  };
+
+  const openDetails = () => {
     setStep(2);
+    setSubmitError(null);
   };
 
   if (step === "done") {
     return (
-      <div className="mt-8 py-5 text-center border-t border-kg-sep-2" aria-live="polite">
+      <div className="px-4 sm:px-6 py-6 text-center border-t border-kg-sep-2" aria-live="polite">
         <div className="mx-auto mb-3 w-8 h-8 rounded-full border border-kg-success/35 bg-kg-success-bg flex items-center justify-center text-kg-success">
-          <IconCheck className="w-4.5 h-4.5" />
+          <IconCheck className="w-4 h-4" />
         </div>
-        <p className="text-[14px] text-kg-text-2 font-sans-zh font-medium">{t.evaluation.doneTitle}</p>
-        <p className="mt-1 text-caption text-kg-text-4 font-sans-zh">{t.evaluation.doneSubline}</p>
+        <p className="text-footnote text-kg-text-2 font-sans-zh font-medium">{t.evaluation.doneTitle}</p>
+        <p className="mt-1 text-caption text-kg-text-3 font-sans-zh max-w-sm mx-auto leading-relaxed">{t.evaluation.doneSubline}</p>
+      </div>
+    );
+  }
+
+  if (step === "saved" && rating) {
+    return (
+      <div className="px-4 sm:px-6 py-5 flex flex-col gap-4 border-t border-kg-sep-2" aria-live="polite">
+        <div className="flex items-center justify-center gap-2.5 text-center">
+          <div className={`w-5 h-5 flex items-center justify-center rounded-full ${ratingToneClass[rating]}`}>
+            {ratingIcon[rating]}
+          </div>
+          <span className="text-footnote font-sans-zh text-kg-text-2">{t.evaluation.savedTitle}</span>
+          <span className={`px-2.5 py-1 text-caption font-sans-zh font-medium rounded-full border ${ratingToneClass[rating]}`}>
+            {ratingLabel[rating]}
+          </span>
+        </div>
+
+        <p className="text-footnote text-kg-text-2 font-sans-zh leading-relaxed text-center max-w-sm mx-auto">
+          {t.evaluation.savedSubline}
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-2">
+          <button
+            onClick={openDetails}
+            disabled={submitting}
+            className="w-full sm:w-auto px-5 py-2 rounded-xl text-footnote font-sans-zh font-medium bg-kg-blue/10 text-kg-blue hover:bg-kg-blue hover:text-white transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {t.evaluation.addDetails}
+          </button>
+          <button
+            onClick={() => setStep("done")}
+            disabled={submitting}
+            className="w-full sm:w-auto px-4 py-2 rounded-xl text-footnote font-sans-zh font-medium text-kg-text-3 hover:bg-kg-bg-2 hover:text-kg-text transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {t.evaluation.finish}
+          </button>
+        </div>
+
+        <p className="text-caption text-kg-text-4 font-sans-zh text-center max-w-xs mx-auto leading-relaxed">
+          {t.evaluation.whyDetails}
+        </p>
       </div>
     );
   }
 
   if (step === 2 && rating) {
     return (
-      <div className="mt-8 pt-6 border-t border-kg-sep-2 flex flex-col gap-4" aria-live="polite">
-        <div className="flex items-center justify-center gap-3">
-          <div className={`w-6 h-6 rounded-full border flex items-center justify-center ${ratingToneClass[rating]}`}>
+      <div className="px-4 sm:px-6 py-5 flex flex-col gap-4 border-t border-kg-sep-2" aria-live="polite">
+        <div className="flex items-center justify-center gap-2.5">
+          <div className={`w-5 h-5 flex items-center justify-center rounded-full ${ratingToneClass[rating]}`}>
             {ratingIcon[rating]}
           </div>
-          <span className="text-footnote font-sans-zh text-kg-text-3">{t.evaluation.yourRating}</span>
-          <span className={`px-2.5 py-1 rounded-full border text-caption font-sans-zh font-medium ${ratingToneClass[rating]}`}>
+          <span className="text-footnote font-sans-zh text-kg-text-2">{t.evaluation.yourRating}</span>
+          <span className={`px-2.5 py-1 text-caption font-sans-zh font-medium rounded-full border ${ratingToneClass[rating]}`}>
             {ratingLabel[rating]}
           </span>
         </div>
 
-        <label className="flex items-center gap-2 cursor-pointer self-start">
+        <p className="text-footnote text-kg-text-3 font-sans-zh text-center max-w-sm mx-auto leading-relaxed">
+          {t.evaluation.detailIntro}
+        </p>
+
+        {submitError && (
+          <div className="rounded-xl border border-kg-layer1-sep bg-kg-layer1-bg px-3.5 py-3 text-footnote text-kg-layer1-text font-sans-zh flex items-start gap-2">
+            <IconAlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-kg-layer1" />
+            <span>{submitError}</span>
+          </div>
+        )}
+
+        <label className="flex items-start gap-3 cursor-pointer px-3.5 py-3 hover:bg-kg-bg-2/50 rounded-xl border border-transparent hover:border-kg-sep/50 transition-colors">
           <input
             type="checkbox"
             checked={intentMismatch}
             onChange={(e) => setIntentMismatch(e.target.checked)}
             disabled={submitting}
-            className="w-4 h-4 accent-(--kg-blue) cursor-pointer"
+            className="w-4 h-4 accent-(--kg-blue) cursor-pointer mt-0.5"
           />
-          <span className="text-[14px] font-sans-zh text-kg-text-2">{t.evaluation.intentMismatch}</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-footnote font-sans-zh text-kg-text-2">{t.evaluation.intentMismatch}</span>
+            <span className="text-caption font-sans-zh text-kg-text-4">{t.evaluation.intentMismatchHint}</span>
+          </div>
         </label>
 
         <div className="flex flex-col gap-1">
-          <label className="text-footnote font-sans-zh text-kg-text-3">{t.evaluation.betterExpressionLabel}</label>
+          <div className="flex items-center justify-between gap-2 px-1">
+            <label className="text-footnote font-sans-zh text-kg-text-3">{t.evaluation.betterExpressionLabel}</label>
+            <span className="text-mono-label font-mono text-kg-text-4">{userCorrection.length}/2000</span>
+          </div>
           <textarea
             value={userCorrection}
             onChange={(e) => setUserCorrection(e.target.value)}
             maxLength={2000}
             disabled={submitting}
             placeholder={t.evaluation.betterExpressionPlaceholder}
-            className="w-full min-h-[80px] p-3 bg-kg-bg border border-kg-sep rounded-lg text-[14px] font-sans-jp text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:shadow-focus transition-all disabled:opacity-60"
+            className={`${textareaBaseClass} font-sans-jp`}
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-footnote font-sans-zh text-kg-text-3">{t.evaluation.feedbackLabel}</label>
+          <div className="flex items-center justify-between gap-2 px-1">
+            <label className="text-footnote font-sans-zh text-kg-text-3">{t.evaluation.feedbackLabel}</label>
+            <span className="text-mono-label font-mono text-kg-text-4">{feedbackNote.length}/500</span>
+          </div>
           <textarea
             value={feedbackNote}
             onChange={(e) => setFeedbackNote(e.target.value)}
             maxLength={500}
             disabled={submitting}
             placeholder={t.evaluation.feedbackPlaceholder}
-            className="w-full min-h-15 p-3 bg-kg-bg border border-kg-sep rounded-lg text-[14px] font-sans-zh text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:shadow-focus transition-all disabled:opacity-60"
+            className={`${textareaBaseClass} min-h-21 font-sans-zh`}
           />
         </div>
 
-        {submitError && (
-          <div className="rounded-lg border border-kg-layer1-sep bg-kg-layer1-bg px-3 py-2.5 text-footnote text-kg-layer1-text font-sans-zh flex items-start gap-2">
-            <IconAlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-kg-layer1" />
-            <span>{submitError}</span>
-          </div>
-        )}
-
-        <div className="flex gap-3 justify-center mt-4">
+        <div className="flex gap-3 justify-center mt-2">
           <button
-            onClick={() => submitEval(rating, !userCorrection && !feedbackNote && !intentMismatch)}
+            onClick={() => submitEval(rating, false)}
             disabled={submitting}
-            className="min-w-32 px-5 py-2.5 rounded-lg text-footnote font-sans-zh font-medium bg-kg-blue text-white hover:bg-kg-blue-hover active:bg-kg-blue-pressed disabled:opacity-60 transition-all interaction-press cursor-pointer disabled:cursor-not-allowed"
+            className="px-5 py-2.5 rounded-xl text-footnote font-sans-zh font-medium bg-kg-blue text-white hover:bg-kg-blue-hover active:bg-kg-blue-pressed disabled:opacity-60 transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             {submitting ? t.evaluation.submitting : t.evaluation.submit}
           </button>
           <button
-            onClick={() => setStep(1)}
+            onClick={() => setStep("saved")}
             disabled={submitting}
-            className="min-w-24 px-5 py-2.5 rounded-lg text-footnote font-sans-zh text-kg-text-2 border border-kg-sep hover:bg-kg-bg-2 hover:text-kg-text disabled:opacity-60 transition-all interaction-press cursor-pointer disabled:cursor-not-allowed"
+            className="px-5 py-2.5 rounded-xl text-footnote font-sans-zh text-kg-text-2 hover:bg-kg-bg-2 border border-transparent hover:border-kg-sep hover:text-kg-text disabled:opacity-60 transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             {t.evaluation.back}
           </button>
@@ -215,32 +282,49 @@ export default function EvaluationWidget({
 
   // Step 1
   return (
-    <div className="mt-8 pt-6 border-t border-kg-sep-2 flex flex-col items-center gap-4">
-      <p className="text-[14px] text-kg-text-2 font-sans-zh font-medium">{t.evaluation.question}</p>
-      <div className="flex gap-3 flex-wrap justify-center">
+    <div className="px-4 sm:px-6 py-6 flex flex-col items-center gap-4 border-t border-kg-sep-2">
+      <div className="text-center space-y-1.5">
+        <p className="text-footnote text-kg-text-2 font-sans-zh font-medium text-center max-w-sm leading-relaxed">
+          {t.evaluation.question}
+        </p>
+        <p className="text-caption text-kg-text-3 font-sans-zh text-center max-w-sm leading-relaxed">
+          {t.evaluation.quickHint}
+        </p>
+      </div>
+
+      <div className="w-full max-w-xl flex flex-wrap justify-center gap-2">
         <button
           onClick={() => handleQuickRate("accurate")}
-          className="px-3 py-2 rounded-lg text-footnote font-sans-zh border border-kg-sep hover:border-kg-success hover:bg-kg-success-bg transition-all interaction-press cursor-pointer flex items-center gap-2 text-kg-text hover:text-kg-success"
+          disabled={submitting}
+          className={`px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-colors cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.accurate}`}
         >
           <IconCheck className="w-4 h-4" />
           <span>{t.evaluation.accurate}</span>
         </button>
         <button
           onClick={() => handleQuickRate("partial")}
-          className="px-3 py-2 rounded-lg text-footnote font-sans-zh border border-kg-sep hover:border-kg-blue hover:bg-kg-blue-bg transition-all interaction-press cursor-pointer flex items-center gap-2 text-kg-text hover:text-kg-blue"
+          disabled={submitting}
+          className={`px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-colors cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.partial}`}
         >
           <IconMinus className="w-4 h-4" />
           <span>{t.evaluation.partial}</span>
         </button>
         <button
           onClick={() => handleQuickRate("inaccurate")}
-          className="px-3 py-2 rounded-lg text-footnote font-sans-zh border border-kg-sep hover:border-kg-layer1 hover:bg-kg-layer1-bg transition-all interaction-press cursor-pointer flex items-center gap-2 text-kg-text hover:text-kg-layer1"
+          disabled={submitting}
+          className={`px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-colors cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.inaccurate}`}
         >
           <IconX className="w-4 h-4" />
           <span>{t.evaluation.inaccurate}</span>
         </button>
       </div>
-      <p className="text-mono-label text-kg-text-4 font-sans-zh leading-relaxed text-center max-w-xs">
+      {submitError && (
+        <div className="w-full rounded-xl border border-kg-layer1-sep bg-kg-layer1-bg px-3.5 py-3 text-footnote text-kg-layer1-text font-sans-zh flex items-start gap-2 max-w-sm">
+          <IconAlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-kg-layer1" />
+          <span>{submitError}</span>
+        </div>
+      )}
+      <p className="text-caption text-kg-text-4 font-sans-zh leading-relaxed text-center max-w-sm">
         {t.evaluation.consent}
       </p>
     </div>

@@ -38,7 +38,11 @@ export async function POST(req: NextRequest) {
 
     const { env } = getCloudflareContext();
     const kv = (env as Record<string, unknown>).KAGAMI_EVAL as KvBinding;
-    const key = `eval_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    const generatedId = typeof crypto?.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    const key = `eval_${generatedId}`;
 
     const record = {
       ...body,
