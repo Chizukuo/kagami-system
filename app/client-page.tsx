@@ -65,7 +65,9 @@ export default function ClientPage() {
       const data: ResultType = await res.json();
       data._inputText = text;
       data._inputScene = scene;
-      data._resId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+      if (!data._resId) {
+        data._resId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+      }
       setResult(data);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {

@@ -4,12 +4,13 @@ import { getI18n } from "@/lib/i18n";
 import { UILanguage } from "@/lib/types";
 
 interface Props {
+  resId: string;
   inputText: string;
   inputScene: string;
   grammarCount: number;
   registerCount: number;
   pragmaticsCount: number;
-  nativeVersion: string;
+  nativeVersion: string[];
   summary: string;
   lang: UILanguage;
 }
@@ -45,6 +46,7 @@ const IconAlertCircle = ({ className = "w-4 h-4" }) => (
 );
 
 export default function EvaluationWidget({
+  resId,
   inputText,
   inputScene,
   grammarCount,
@@ -100,12 +102,13 @@ export default function EvaluationWidget({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          resId,
           inputText,
           inputScene,
           grammarCount,
           registerCount,
           pragmaticsCount,
-          nativeVersion,
+          nativeVersion: nativeVersion.join("\n"),
           summary,
           rating: currentRating,
           ...(skipDetails ? {} : { intentMismatch, userCorrection, feedbackNote }),

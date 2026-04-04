@@ -6,6 +6,12 @@ import { isSupportedLanguage } from "@/lib/i18n";
 const MAX_TEXT_LENGTH = 2000;
 const MAX_SCENE_LENGTH = 200;
 
+function createResId() {
+  return typeof crypto?.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function messageByLang(lang: UILanguage, zh: string, ja: string) {
   return lang === "ja" ? ja : zh;
 }
@@ -51,7 +57,10 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await diagnose(body.text, body.scene, lang);
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      _resId: createResId(),
+    });
   } catch (error) {
     console.error("[Kagami] Diagnose error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";

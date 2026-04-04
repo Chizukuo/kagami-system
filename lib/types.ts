@@ -1,4 +1,6 @@
 export type UILanguage = "zh" | "ja";
+export type IssueLayer = "grammar" | "register" | "pragmatics";
+export type IssueVote = "agree" | "disagree";
 
 export interface Alternative {
   expression: string; // Japanese
@@ -28,7 +30,7 @@ export interface DiagnosisResult {
   grammar: GrammarIssue[];
   register: RegisterIssue[];
   pragmatics: PragmaticsIssue[];
-  native_version: string; // Japanese
+  native_version: string[]; // Japanese sentences
   summary: string;        // UI language (Chinese or Japanese)
   // Client-side only -- not from API
   _inputText?: string;
@@ -39,5 +41,17 @@ export interface DiagnosisResult {
 export interface DiagnoseRequest {
   text: string;
   scene: string;
+  lang?: UILanguage;
+}
+
+export interface IssueFeedbackPayload {
+  resId: string;
+  layer: IssueLayer;
+  index: number;
+  vote: IssueVote;
+  issueHash?: string;
+  issueOriginal?: string;
+  issueText?: string;
+  timestamp: string;
   lang?: UILanguage;
 }

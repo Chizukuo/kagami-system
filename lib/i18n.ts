@@ -38,6 +38,9 @@ export const I18N = {
       nativeSubline: "As expressed by a native speaker.",
       analysisLabel: "解析",
       alternativesLabel: "Alternatives",
+      issueFeedbackPrompt: "这条诊断对吗？",
+      issueAgree: "✓ 对",
+      issueDisagree: "✗ 不对",
       severity: {
         excellent: "非常自然",
         good: "基本自然",
@@ -110,6 +113,9 @@ export const I18N = {
       nativeSubline: "As expressed by a native speaker.",
       analysisLabel: "解説",
       alternativesLabel: "Alternatives",
+      issueFeedbackPrompt: "この診断は妥当でしたか？",
+      issueAgree: "✓ 妥当",
+      issueDisagree: "✗ ちがう",
       severity: {
         excellent: "とても自然",
         good: "自然",

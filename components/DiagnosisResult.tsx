@@ -47,6 +47,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
 
       {/* Evaluation Widget - Lightweight footer */}
       <EvaluationWidget
+        resId={result._resId ?? ""}
         inputText={result._inputText ?? ""}
         inputScene={result._inputScene ?? ""}
         grammarCount={result.grammar.length}
@@ -65,26 +66,32 @@ export default function DiagnosisResult({ result, lang }: Props) {
 
         {/* Layers */}
         <LayerSection
+          key={`${result._resId}-grammar`}
           title="Grammar 语法"
           layerType="grammar"
           items={result.grammar}
           emptyMessage="无语法错误"
+          resId={result._resId}
           lang={lang}
         />
 
         <LayerSection
+          key={`${result._resId}-register`}
           title="Register 语体"
           layerType="register"
           items={result.register}
           emptyMessage="语体使用恰当"
+          resId={result._resId}
           lang={lang}
         />
 
         <LayerSection
+          key={`${result._resId}-pragmatics`}
           title="Pragmatics 语用"
           layerType="pragmatics"
           items={result.pragmatics}
           emptyMessage="表达自然"
+          resId={result._resId}
           lang={lang}
         />
       </div>

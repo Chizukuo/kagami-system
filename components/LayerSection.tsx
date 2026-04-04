@@ -1,6 +1,7 @@
 "use client";
 
-import { GrammarIssue, RegisterIssue, PragmaticsIssue, UILanguage } from "@/lib/types";
+import { useState } from "react";
+import { GrammarIssue, IssueVote, PragmaticsIssue, RegisterIssue, UILanguage } from "@/lib/types";
 import { getI18n } from "@/lib/i18n";
 
 interface Props {
@@ -8,13 +9,48 @@ interface Props {
   layerType: "grammar" | "register" | "pragmatics";
   items: GrammarIssue[] | RegisterIssue[] | PragmaticsIssue[];
   emptyMessage: string;
+  resId?: string;
   lang: UILanguage;
 }
 
 export default function LayerSection({
-  title, layerType, items, emptyMessage, lang = "zh"
+  title, layerType, items, emptyMessage, resId, lang = "zh"
 }: Props) {
   const t = getI18n(lang);
+  const [votes, setVotes] = useState<Record<string, IssueVote | undefined>>({});
+
+  const getVoteKey = (index: number) => `${resId ?? "__nores__"}:${index}`;
+
+  const submitIssueFeedback = (index: number, vote: IssueVote, issueOriginal: string, issueText: string) => {
+    const voteKey = getVoteKey(index);
+    if (votes[voteKey] === vote) {
+      return;
+    }
+
+    setVotes((prev) => ({ ...prev, [voteKey]: vote }));
+
+    if (!resId) {
+      return;
+    }
+
+    void fetch("/api/issue-feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        resId,
+        layer: layerType,
+        index,
+        vote,
+        issueOriginal,
+        issueText,
+        timestamp: new Date().toISOString(),
+        lang,
+      }),
+    }).catch(() => {
+      // Silent mode by design: optimistic UI update without user interruption.
+    });
+  };
+
   if (items.length === 0) {
     return (
       <div className="mb-8">
@@ -95,6 +131,36 @@ export default function LayerSection({
                     </span>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {resId && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="text-caption text-kg-text-4 font-sans-zh mr-1">
+                  {t.result.issueFeedbackPrompt}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => submitIssueFeedback(index, "agree", item.original, item.issue)}
+                  className={`px-2.5 py-1 rounded-lg border text-caption font-sans-zh transition-colors cursor-pointer ${
+                    votes[getVoteKey(index)] === "agree"
+                      ? "bg-kg-success-bg text-kg-success border-kg-success/35"
+                      : "bg-kg-bg text-kg-text-3 border-kg-sep hover:bg-kg-bg-2 hover:text-kg-text"
+                  }`}
+                >
+                  {t.result.issueAgree}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submitIssueFeedback(index, "disagree", item.original, item.issue)}
+                  className={`px-2.5 py-1 rounded-lg border text-caption font-sans-zh transition-colors cursor-pointer ${
+                    votes[getVoteKey(index)] === "disagree"
+                      ? "bg-kg-layer1-bg text-kg-layer1 border-kg-layer1/30"
+                      : "bg-kg-bg text-kg-text-3 border-kg-sep hover:bg-kg-bg-2 hover:text-kg-text"
+                  }`}
+                >
+                  {t.result.issueDisagree}
+                </button>
               </div>
             )}
           </div>
