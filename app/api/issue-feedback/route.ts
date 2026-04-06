@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { IssueFeedbackPayload, IssueLayer, IssueVote } from "@/lib/types";
+import { IssueFeedbackPayload, IssueLayer, IssueVote, ProficiencyLevel } from "@/lib/types";
 
 interface KvBinding {
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
@@ -8,6 +8,7 @@ interface KvBinding {
 
 const VALID_LAYERS: IssueLayer[] = ["grammar", "register", "pragmatics"];
 const VALID_VOTES: IssueVote[] = ["agree", "disagree"];
+const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
 const MAX_ISSUE_INDEX = 50;
 const MAX_RES_ID_LENGTH = 128;
 const MAX_ISSUE_ORIGINAL_LENGTH = 500;
@@ -40,6 +41,14 @@ function isValidLayer(layer: unknown): layer is IssueLayer {
 
 function isValidVote(vote: unknown): vote is IssueVote {
   return typeof vote === "string" && VALID_VOTES.includes(vote as IssueVote);
+}
+
+function normalizeProficiencyLevel(value: unknown): ProficiencyLevel | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const normalized = value.toUpperCase() as ProficiencyLevel;
+  return VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : undefined;
 }
 
 export async function POST(req: NextRequest) {
@@ -76,6 +85,7 @@ export async function POST(req: NextRequest) {
       layer: body.layer,
       index: issueIndex,
       vote: body.vote,
+      proficiencyLevel: normalizeProficiencyLevel(body.proficiencyLevel),
       issueHash,
       timestamp: new Date().toISOString(),
       lang: body.lang,

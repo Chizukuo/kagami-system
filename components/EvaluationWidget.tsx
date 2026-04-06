@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { getI18n } from "@/lib/i18n";
-import { UILanguage } from "@/lib/types";
+import { ProficiencyLevel, UILanguage } from "@/lib/types";
 
 interface Props {
   resId: string;
@@ -16,6 +16,19 @@ interface Props {
 }
 
 type Rating = "accurate" | "partial" | "inaccurate";
+const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
+
+function getStoredProficiencyLevel(): ProficiencyLevel | "" {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  const stored = window.localStorage.getItem("kagami.proficiencyLevel");
+  if (!stored) {
+    return "";
+  }
+  const normalized = stored.toUpperCase() as ProficiencyLevel;
+  return VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : "";
+}
 
 // Flat icon components (minimal, linear style)
 const IconCheck = ({ className = "w-5 h-5" }) => (
@@ -45,6 +58,12 @@ const IconAlertCircle = ({ className = "w-4 h-4" }) => (
   </svg>
 );
 
+const IconChevronDown = ({ className = "w-5 h-5", strokeWidth = "2" }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </svg>
+);
+
 export default function EvaluationWidget({
   resId,
   inputText,
@@ -66,6 +85,7 @@ export default function EvaluationWidget({
   const [intentMismatch, setIntentMismatch] = useState(false);
   const [userCorrection, setUserCorrection] = useState("");
   const [feedbackNote, setFeedbackNote] = useState("");
+  const [proficiencyLevel, setProficiencyLevel] = useState<ProficiencyLevel | "">(getStoredProficiencyLevel);
 
   const ratingLabel: Record<Rating, string> = {
     accurate: t.evaluation.accurate,
@@ -86,13 +106,13 @@ export default function EvaluationWidget({
   };
 
   const quickRateButtonClass: Record<Rating, string> = {
-    accurate: "hover:bg-kg-success-bg hover:text-kg-success hover:border-kg-success/30",
-    partial: "hover:bg-kg-blue-bg hover:text-kg-blue hover:border-kg-blue/30",
-    inaccurate: "hover:bg-kg-layer1-bg hover:text-kg-layer1 hover:border-kg-layer1/30",
+    accurate: "hover:bg-kg-success-bg hover:text-kg-success hover:border-kg-success/30 hover:shadow-sm",
+    partial: "hover:bg-kg-blue-bg hover:text-kg-blue hover:border-kg-blue/30 hover:shadow-sm",
+    inaccurate: "hover:bg-kg-layer1-bg hover:text-kg-layer1 hover:border-kg-layer1/30 hover:shadow-sm",
   };
 
   const textareaBaseClass =
-    "w-full min-h-[96px] p-3.5 bg-kg-bg border border-kg-sep rounded-xl text-[14px] text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:ring-1 focus:ring-kg-blue/30 transition-all disabled:opacity-60";
+    "w-full min-h-[96px] p-3.5 bg-kg-bg border border-kg-sep rounded-xl text-[14px] text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:ring-4 focus:ring-kg-blue/10 hover:border-kg-sep-2 transition-all duration-200 ease-apple disabled:opacity-60 shadow-sm focus:shadow-md";
 
   const submitEval = async (currentRating: Rating, skipDetails = false) => {
     setSubmitting(true);
@@ -111,6 +131,7 @@ export default function EvaluationWidget({
           nativeVersion: nativeVersion.join("\n"),
           summary,
           rating: currentRating,
+          proficiencyLevel: proficiencyLevel || undefined,
           ...(skipDetails ? {} : { intentMismatch, userCorrection, feedbackNote }),
           lang,
         }),
@@ -142,9 +163,22 @@ export default function EvaluationWidget({
     setSubmitError(null);
   };
 
+  const handleProficiencyChange = (value: string) => {
+    const normalized = value.toUpperCase() as ProficiencyLevel;
+    const next = VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : "";
+    setProficiencyLevel(next);
+    if (typeof window !== "undefined") {
+      if (next) {
+        window.localStorage.setItem("kagami.proficiencyLevel", next);
+      } else {
+        window.localStorage.removeItem("kagami.proficiencyLevel");
+      }
+    }
+  };
+
   if (step === "done") {
     return (
-      <div className="px-4 sm:px-6 py-6 text-center border-t border-kg-sep-2" aria-live="polite">
+      <div className="px-4 sm:px-6 py-6 text-center border-t border-kg-sep-2 animate-fade-in-up" aria-live="polite">
         <div className="mx-auto mb-3 w-8 h-8 rounded-full border border-kg-success/35 bg-kg-success-bg flex items-center justify-center text-kg-success">
           <IconCheck className="w-4 h-4" />
         </div>
@@ -156,7 +190,7 @@ export default function EvaluationWidget({
 
   if (step === "saved" && rating) {
     return (
-      <div className="px-4 sm:px-6 py-5 flex flex-col gap-4 border-t border-kg-sep-2" aria-live="polite">
+      <div className="px-4 sm:px-6 py-5 flex flex-col gap-4 border-t border-kg-sep-2 animate-fade-in-up" aria-live="polite">
         <div className="flex items-center justify-center gap-2.5 text-center">
           <div className={`w-5 h-5 flex items-center justify-center rounded-full ${ratingToneClass[rating]}`}>
             {ratingIcon[rating]}
@@ -175,14 +209,14 @@ export default function EvaluationWidget({
           <button
             onClick={openDetails}
             disabled={submitting}
-            className="w-full sm:w-auto px-5 py-2 rounded-xl text-footnote font-sans-zh font-medium bg-kg-blue/10 text-kg-blue hover:bg-kg-blue hover:text-white transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="interaction-press w-full sm:w-auto px-5 py-2 rounded-xl text-footnote font-sans-zh font-medium bg-kg-blue/10 text-kg-blue hover:bg-kg-blue hover:text-white transition-all duration-200 ease-apple cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {t.evaluation.addDetails}
           </button>
           <button
             onClick={() => setStep("done")}
             disabled={submitting}
-            className="w-full sm:w-auto px-4 py-2 rounded-xl text-footnote font-sans-zh font-medium text-kg-text-3 hover:bg-kg-bg-2 hover:text-kg-text transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="interaction-press w-full sm:w-auto px-4 py-2 rounded-xl text-footnote font-sans-zh font-medium text-kg-text-3 hover:bg-kg-bg-2 hover:text-kg-text transition-all duration-200 ease-apple cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {t.evaluation.finish}
           </button>
@@ -197,7 +231,7 @@ export default function EvaluationWidget({
 
   if (step === 2 && rating) {
     return (
-      <div className="px-4 sm:px-6 py-5 flex flex-col gap-4 border-t border-kg-sep-2" aria-live="polite">
+      <div className="px-4 sm:px-6 py-5 flex flex-col gap-4 border-t border-kg-sep-2 animate-fade-in-up" aria-live="polite">
         <div className="flex items-center justify-center gap-2.5">
           <div className={`w-5 h-5 flex items-center justify-center rounded-full ${ratingToneClass[rating]}`}>
             {ratingIcon[rating]}
@@ -219,7 +253,7 @@ export default function EvaluationWidget({
           </div>
         )}
 
-        <label className="flex items-start gap-3 cursor-pointer px-3.5 py-3 hover:bg-kg-bg-2/50 rounded-xl border border-transparent hover:border-kg-sep/50 transition-colors">
+        <label className="interaction-press flex items-start gap-3 cursor-pointer px-3.5 py-3 hover:bg-kg-bg-2/50 rounded-xl border border-transparent hover:border-kg-sep/50 transition-all duration-200 ease-apple">
           <input
             type="checkbox"
             checked={intentMismatch}
@@ -232,6 +266,31 @@ export default function EvaluationWidget({
             <span className="text-caption font-sans-zh text-kg-text-4">{t.evaluation.intentMismatchHint}</span>
           </div>
         </label>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-footnote font-sans-zh text-kg-text-3 px-1">{t.evaluation.proficiencyLabel}</label>
+          <div className="relative group">
+            <select
+              value={proficiencyLevel}
+              onChange={(e) => handleProficiencyChange(e.target.value)}
+              disabled={submitting}
+              className="appearance-none w-full h-11 pl-3.5 pr-10 bg-kg-bg border border-kg-sep rounded-xl text-[14px] text-kg-text outline-none focus:border-kg-blue focus:ring-4 focus:ring-kg-blue/10 hover:border-kg-sep-2 shadow-sm focus:shadow-md transition-all duration-200 ease-apple disabled:opacity-60 cursor-pointer"
+            >
+              <option value="">{t.evaluation.proficiencyPlaceholder}</option>
+              <option value="N5">N5</option>
+              <option value="N4">N4</option>
+              <option value="N3">N3</option>
+              <option value="N2">N2</option>
+              <option value="N1">N1</option>
+              <option value="N1_PLUS">{t.evaluation.proficiencyN1Plus}</option>
+              <option value="UNKNOWN">{t.evaluation.proficiencyUnknown}</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-kg-text-4 group-hover:text-kg-text-3 transition-colors">
+              <IconChevronDown className="w-4 h-4" strokeWidth="2.5" />
+            </div>
+          </div>
+          <p className="text-caption text-kg-text-4 font-sans-zh px-1">{t.evaluation.proficiencyHint}</p>
+        </div>
 
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between gap-2 px-1">
@@ -267,14 +326,14 @@ export default function EvaluationWidget({
           <button
             onClick={() => submitEval(rating, false)}
             disabled={submitting}
-            className="px-5 py-2.5 rounded-xl text-footnote font-sans-zh font-medium bg-kg-blue text-white hover:bg-kg-blue-hover active:bg-kg-blue-pressed disabled:opacity-60 transition-colors cursor-pointer disabled:cursor-not-allowed"
+            className="interaction-press shadow-sm hover:shadow-md px-5 py-2.5 rounded-xl text-footnote font-sans-zh font-medium bg-kg-blue text-white hover:bg-kg-blue-hover active:bg-kg-blue-pressed disabled:opacity-60 transition-all duration-200 ease-apple cursor-pointer disabled:cursor-not-allowed"
           >
             {submitting ? t.evaluation.submitting : t.evaluation.submit}
           </button>
           <button
             onClick={() => setStep("saved")}
             disabled={submitting}
-            className="px-5 py-2.5 rounded-xl text-footnote font-sans-zh text-kg-text-2 hover:bg-kg-bg-2 border border-transparent hover:border-kg-sep hover:text-kg-text disabled:opacity-60 transition-colors cursor-pointer disabled:cursor-not-allowed"
+            className="interaction-press px-5 py-2.5 rounded-xl text-footnote font-sans-zh text-kg-text-2 hover:bg-kg-bg-2 border border-transparent hover:border-kg-sep hover:text-kg-text disabled:opacity-60 transition-all duration-200 ease-apple cursor-pointer disabled:cursor-not-allowed"
           >
             {t.evaluation.back}
           </button>
@@ -285,7 +344,7 @@ export default function EvaluationWidget({
 
   // Step 1
   return (
-    <div className="px-4 sm:px-6 py-6 flex flex-col items-center gap-4 border-t border-kg-sep-2">
+    <div className="px-4 sm:px-6 py-6 flex flex-col items-center gap-4 border-t border-kg-sep-2 animate-fade-in-up">
       <div className="text-center space-y-1.5">
         <p className="text-footnote text-kg-text-2 font-sans-zh font-medium text-center max-w-sm leading-relaxed">
           {t.evaluation.question}
@@ -299,7 +358,7 @@ export default function EvaluationWidget({
         <button
           onClick={() => handleQuickRate("accurate")}
           disabled={submitting}
-          className={`px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-colors cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.accurate}`}
+          className={`interaction-press px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-all duration-200 ease-apple cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.accurate}`}
         >
           <IconCheck className="w-4 h-4" />
           <span>{t.evaluation.accurate}</span>
@@ -307,7 +366,7 @@ export default function EvaluationWidget({
         <button
           onClick={() => handleQuickRate("partial")}
           disabled={submitting}
-          className={`px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-colors cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.partial}`}
+          className={`interaction-press px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-all duration-200 ease-apple cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.partial}`}
         >
           <IconMinus className="w-4 h-4" />
           <span>{t.evaluation.partial}</span>
@@ -315,7 +374,7 @@ export default function EvaluationWidget({
         <button
           onClick={() => handleQuickRate("inaccurate")}
           disabled={submitting}
-          className={`px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-colors cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.inaccurate}`}
+          className={`interaction-press px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-all duration-200 ease-apple cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.inaccurate}`}
         >
           <IconX className="w-4 h-4" />
           <span>{t.evaluation.inaccurate}</span>

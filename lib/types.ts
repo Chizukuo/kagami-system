@@ -1,6 +1,7 @@
 export type UILanguage = "zh" | "ja";
 export type IssueLayer = "grammar" | "register" | "pragmatics";
 export type IssueVote = "agree" | "disagree";
+export type ProficiencyLevel = "N5" | "N4" | "N3" | "N2" | "N1" | "N1_PLUS" | "UNKNOWN";
 
 export interface Alternative {
   expression: string; // Japanese
@@ -49,6 +50,7 @@ export interface IssueFeedbackPayload {
   layer: IssueLayer;
   index: number;
   vote: IssueVote;
+  proficiencyLevel?: ProficiencyLevel;
   issueHash?: string;
   issueOriginal?: string;
   issueText?: string;

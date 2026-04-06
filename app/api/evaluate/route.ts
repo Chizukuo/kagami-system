@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { ProficiencyLevel } from "@/lib/types";
 
 interface KvBinding {
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
 }
 
 type Rating = "accurate" | "partial" | "inaccurate";
+const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
 const MAX_RES_ID_LENGTH = 128;
 
 interface EvalPayload {
@@ -20,14 +22,16 @@ interface EvalPayload {
   nativeVersion: string[] | string;
   summary: string;
   // Human evaluation
+  // Legacy key naming: rating stores helpfulness acceptance, not truth-level accuracy.
   rating: Rating;
+  proficiencyLevel?: ProficiencyLevel;
   lang?: "zh" | "ja";
   intentMismatch?: boolean;
   userCorrection?: string;
   feedbackNote?: string;
 }
 
-function deriveSystemRating(grammarCount: number, registerCount: number, pragmaticsCount: number): Rating {
+function deriveSeverityLevel(grammarCount: number, registerCount: number, pragmaticsCount: number): Rating {
   const total = grammarCount + registerCount + pragmaticsCount;
 
   if (total === 0) {
@@ -73,6 +77,14 @@ function sanitizeResId(resId?: string): string {
     .replace(/[^A-Za-z0-9_-]/g, "");
 }
 
+function normalizeProficiencyLevel(value: unknown): ProficiencyLevel | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const normalized = value.toUpperCase() as ProficiencyLevel;
+  return VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : undefined;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body: EvalPayload = await req.json();
@@ -99,14 +111,19 @@ export async function POST(req: NextRequest) {
     const resId = sanitizeResId(body.resId) || generatedId;
     const key = `eval_${resId}`;
     const nativeVersionLines = normalizeNativeVersion(body.nativeVersion);
-    const systemRating = deriveSystemRating(body.grammarCount, body.registerCount, body.pragmaticsCount);
+    const severityLevel = deriveSeverityLevel(body.grammarCount, body.registerCount, body.pragmaticsCount);
 
     const record = {
       ...body,
       resId,
-      systemRating,
+      // severityLevel: LLM's assessment of input quality (issue count-based).
+      // This is NOT comparable to user `rating`, which measures diagnosis acceptance.
+      // They measure different constructs and should not be directly cross-tabulated
+      // without a gold annotation reference set.
+      severityLevel,
       nativeVersion: nativeVersionLines.join("\n"),
       // Sanitize optional fields
+      proficiencyLevel: normalizeProficiencyLevel(body.proficiencyLevel),
       intentMismatch: body.intentMismatch ?? false,
       userCorrection: (body.userCorrection ?? "").trim().slice(0, 2000),
       feedbackNote: (body.feedbackNote ?? "").trim().slice(0, 500),

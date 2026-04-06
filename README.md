@@ -21,11 +21,11 @@ Moving beyond traditional Grammatical Error Correction (GEC), Kagami introduces 
 
 ## 🔬 Academic Motivation
 
-Chinese learners of Japanese often face a unique challenge: constructing sentences that are grammatically flawless but contextually awkward or unnatural to native speakers. Existing tools focus heavily on rigid grammar rules, ignoring the social context (Register) and native expression habits (Pragmatics). 
+Chinese learners of Japanese frequently produce sentences that are grammatically flawless yet pragmatically unnatural to native speakers. While traditional Grammatical Error Correction (GEC) tools effectively address rule-based errors, they remain blind to the subtler dimensions of Register appropriateness and Pragmatic naturalness - the very dimensions that define true communicative competence.
 
-Kagami serves as a **pilot research platform** to investigate:
-1. Whether LLMs can effectively separate and diagnose errors across Grammar, Register, and Pragmatics.
-2. The alignment between LLM-generated pragmatic corrections and human native-speaker intuition (Human-AI Alignment).
+A core challenge in Second Language Acquisition (SLA) research is measuring **metapragmatic awareness**: learners' ability to recognize and reason about pragmatic norms they may not yet produce consistently. Traditional assessment relies on Discourse Completion Tasks (DCTs) or think-aloud protocols, which are resource-intensive and difficult to scale.
+
+Kagami explores an alternative approach: using **LLM-generated layered diagnostics as a pragmatic stimulus**, then observing **how learners respond to each diagnostic layer** - Grammar, Register, and Pragmatics - as a scalable proxy for metapragmatic awareness. The hypothesis draws on Pienemann's *Teachability Hypothesis*: if pragmatic knowledge is acquired later and is cognitively more demanding, learners should systematically accept Grammar corrections more readily than Pragmatics corrections, producing a measurable **acceptance gradient** across the three layers.
 
 ## 🧠 The Three-Layer Framework
 
@@ -40,6 +40,27 @@ Users input their Japanese text along with the specific **social context** (e.g.
 3. **Layer 3: Pragmatics (语用)**
    - Identifies expressions that are grammatically correct and situationally appropriate, but unnatural to a native speaker. Provides alternative native-like phrasing based on the context.
    - *Nature*: Native fluency and information structure.
+   - Prompt reasoning flow (Step A-D):
+     - Step A: Ignore learner wording and draft what a native speaker would likely say in the given scene.
+     - Step B: Compare the native draft against the learner sentence.
+     - Step C: Identify mismatches in collocation, information order, expression habits, and pragmatic expectations.
+     - Step D: Report only Step C differences as pragmatics issues.
+
+## 🎯 Research Objective
+
+This project investigates a single focused research question:
+
+> **Do L2 learners' acceptance rates of LLM-generated diagnostics differ systematically across Grammar, Register, and Pragmatics layers - and does this gradient align with the predicted Teachability Hierarchy?**
+
+Specifically, Kagami collects two granularities of anonymous learner feedback:
+
+1. **Macro-level**: A 3-point holistic rating of the overall diagnosis (helpful / partially helpful / not helpful).
+2. **Micro-level**: Per-issue binary votes (agree / disagree) tagged by layer (Grammar / Register / Pragmatics).
+
+The micro-level data enables per-layer acceptance-rate analysis. A declining acceptance rate from Grammar -> Register -> Pragmatics would constitute evidence that learners' metapragmatic awareness lags behind grammatical knowledge, consistent with the Teachability Hierarchy.
+
+> [!IMPORTANT]
+> **Learner feedback is not ground truth.** Agree/disagree votes reflect diagnostic acceptance (learner cognition), not diagnostic accuracy (linguistic truth). Future work will introduce a native-speaker gold annotation set to enable three-way triangulation: LLM-vs-Gold, Learner-vs-Gold, and Learner-vs-LLM.
 
 ## 🛠 Tech Stack
 
@@ -50,8 +71,7 @@ Users input their Japanese text along with the specific **social context** (e.g.
 
 ## 📊 Human Evaluation Mechanism
 
-To support ongoing NLP research, Kagami includes a frictionless, silent-submission evaluation widget. 
-When users receive their diagnostic results, they are prompted to evaluate the naturalness and accuracy of the AI's suggestions. This data is collected anonymously and will be used to calculate Cohen's Kappa for human-LLM consistency in future studies.
+To support ongoing SLA/NLP research, Kagami collects anonymous feedback at two granularities: a holistic 3-point post-diagnosis evaluation and issue-level agree/disagree votes tagged by layer (Grammar/Register/Pragmatics). This layered signal enables per-layer acceptance-rate analysis and helps model learner diagnostic acceptance along the grammar-register-pragmatics continuum as a proxy for metapragmatic awareness, rather than treating learner feedback as ground-truth AI accuracy; future work will add a small native-speaker gold annotation set for three-way triangulation (LLM-vs-Gold, Learner-vs-Gold, Learner-vs-LLM).
 
 ## 👨‍💻 About the Developer
 

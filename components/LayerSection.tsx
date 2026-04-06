@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GrammarIssue, IssueVote, PragmaticsIssue, RegisterIssue, UILanguage } from "@/lib/types";
+import { GrammarIssue, IssueVote, PragmaticsIssue, ProficiencyLevel, RegisterIssue, UILanguage } from "@/lib/types";
 import { getI18n } from "@/lib/i18n";
 
 interface Props {
@@ -11,6 +11,20 @@ interface Props {
   emptyMessage: string;
   resId?: string;
   lang: UILanguage;
+}
+
+const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
+
+function getStoredProficiencyLevel(): ProficiencyLevel | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+  const stored = window.localStorage.getItem("kagami.proficiencyLevel");
+  if (!stored) {
+    return undefined;
+  }
+  const normalized = stored.toUpperCase() as ProficiencyLevel;
+  return VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : undefined;
 }
 
 export default function LayerSection({
@@ -41,6 +55,7 @@ export default function LayerSection({
         layer: layerType,
         index,
         vote,
+        proficiencyLevel: getStoredProficiencyLevel(),
         issueOriginal,
         issueText,
         timestamp: new Date().toISOString(),
