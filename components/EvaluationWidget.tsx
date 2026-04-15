@@ -17,6 +17,7 @@ interface Props {
 
 type Rating = "accurate" | "partial" | "inaccurate";
 const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
+const MAX_LOG_LENGTH = 4000;
 
 function getStoredProficiencyLevel(): ProficiencyLevel | "" {
   if (typeof window === "undefined") {
@@ -28,6 +29,20 @@ function getStoredProficiencyLevel(): ProficiencyLevel | "" {
   }
   const normalized = stored.toUpperCase() as ProficiencyLevel;
   return VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : "";
+}
+
+function truncateLog(input: string, maxLength = MAX_LOG_LENGTH) {
+  if (input.length <= maxLength) {
+    return input;
+  }
+  return `${input.slice(0, maxLength)}\n... [truncated]`;
+}
+
+function getErrorMessage(errorData: unknown, fallback: string, status: number) {
+  if (typeof errorData === "object" && errorData !== null && "error" in errorData && typeof (errorData as { error?: unknown }).error === "string") {
+    return `${fallback} [HTTP ${status}]: ${(errorData as { error: string }).error}`;
+  }
+  return `${fallback} [HTTP ${status}]`;
 }
 
 // Flat icon components (minimal, linear style)
@@ -79,7 +94,7 @@ export default function EvaluationWidget({
   const [rating, setRating] = useState<Rating | null>(null);
   const [step, setStep] = useState<1 | "saved" | 2 | "done">(1);
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<{ message: string; log?: string } | null>(null);
 
   // Step 2 optional fields
   const [intentMismatch, setIntentMismatch] = useState(false);
@@ -138,15 +153,33 @@ export default function EvaluationWidget({
       });
 
       if (!res.ok) {
-        throw new Error(t.evaluation.submitFailed);
+        let errMessage = `${t.evaluation.submitFailed} [HTTP ${res.status}]`;
+        const rawLogParts: string[] = [
+          `Status: ${res.status} ${res.statusText}`,
+          `URL: ${res.url}`,
+          `Environment: ${process.env.NODE_ENV}`,
+        ];
+        try {
+          const errorData: unknown = await res.json();
+          errMessage = getErrorMessage(errorData, t.evaluation.submitFailed, res.status);
+          rawLogParts.push(`Response:\n${truncateLog(JSON.stringify(errorData, null, 2))}`);
+        } catch {
+          const textRes = await res.text().catch(() => "No response body");
+          rawLogParts.push(`Response:\n${truncateLog(textRes)}`);
+        }
+        setSubmitError({
+          message: errMessage,
+          log: truncateLog(rawLogParts.join("\n\n")),
+        });
+        return;
       }
 
       setStep(skipDetails ? "saved" : "done");
     } catch (error) {
       if (error instanceof Error && error.message) {
-        setSubmitError(error.message);
+        setSubmitError({ message: error.message, log: truncateLog(error.stack || error.message) });
       } else {
-        setSubmitError(t.evaluation.submitFailed);
+        setSubmitError({ message: t.evaluation.submitFailed, log: truncateLog(String(error)) });
       }
     } finally {
       setSubmitting(false);
@@ -247,9 +280,27 @@ export default function EvaluationWidget({
         </p>
 
         {submitError && (
-          <div className="rounded-xl border border-kg-layer1-sep bg-kg-layer1-bg px-3.5 py-3 text-footnote text-kg-layer1-text font-sans-zh flex items-start gap-2">
+          <div className="rounded-xl border border-kg-layer1-sep bg-kg-layer1-bg px-3.5 py-3 text-footnote text-kg-layer1-text font-sans-zh flex items-start gap-2 max-w-sm mx-auto w-full shadow-sm">
             <IconAlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-kg-layer1" />
-            <span>{submitError}</span>
+            <div className="flex flex-col gap-1 w-full">
+              <span>{submitError.message}</span>
+              {submitError.log && (
+                <button 
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(submitError.log || "");
+                      alert(lang === "ja" ? "ログをコピーしました" : "日志已复制");
+                    } catch {
+                      alert(lang === "ja" ? "コピーに失敗しました" : "复制失败，请手动复制");
+                    }
+                  }}
+                  className="text-caption text-kg-blue hover:text-kg-blue-hover font-medium bg-transparent border-none p-0 cursor-pointer self-start"
+                >
+                  {lang === "ja" ? "ログをコピー" : "复制日志"}
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -383,7 +434,25 @@ export default function EvaluationWidget({
       {submitError && (
         <div className="w-full rounded-xl border border-kg-layer1-sep bg-kg-layer1-bg px-3.5 py-3 text-footnote text-kg-layer1-text font-sans-zh flex items-start gap-2 max-w-sm">
           <IconAlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-kg-layer1" />
-          <span>{submitError}</span>
+          <div className="flex flex-col gap-1 w-full">
+            <span>{submitError.message}</span>
+            {submitError.log && (
+              <button 
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(submitError.log || "");
+                    alert(lang === "ja" ? "ログをコピーしました" : "日志已复制");
+                  } catch {
+                    alert(lang === "ja" ? "コピーに失敗しました" : "复制失败，请手动复制");
+                  }
+                }}
+                className="text-caption text-kg-blue hover:text-kg-blue-hover font-medium bg-transparent border-none p-0 cursor-pointer self-start"
+              >
+                {lang === "ja" ? "ログをコピー" : "复制日志"}
+              </button>
+            )}
+          </div>
         </div>
       )}
       <p className="text-caption text-kg-text-4 font-sans-zh leading-relaxed text-center max-w-sm">

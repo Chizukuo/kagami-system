@@ -7,6 +7,8 @@ import DiagnosisResult from "@/components/DiagnosisResult";
 import { DiagnosisResult as ResultType, UILanguage } from "@/lib/types";
 import { getI18n, isSupportedLanguage } from "@/lib/i18n";
 
+const MAX_LOG_LENGTH = 4000;
+
 // Flat icon for alerts
 const IconAlertCircle = ({ className = "w-4 h-4" }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={className}>
@@ -16,11 +18,25 @@ const IconAlertCircle = ({ className = "w-4 h-4" }) => (
   </svg>
 );
 
+function truncateLog(input: string, maxLength = MAX_LOG_LENGTH) {
+  if (input.length <= maxLength) {
+    return input;
+  }
+  return `${input.slice(0, maxLength)}\n... [truncated]`;
+}
+
+function getErrorMessage(errorData: unknown, status: number, statusText: string) {
+  if (typeof errorData === "object" && errorData !== null && "error" in errorData && typeof (errorData as { error?: unknown }).error === "string") {
+    return `[HTTP ${status}] ${(errorData as { error: string }).error}`;
+  }
+  return `HTTP ${status} ${statusText}`;
+}
+
 export default function ClientPage() {
   const [lang, setLang] = useState<UILanguage>("zh");
   const [result, setResult] = useState<ResultType | null>(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; log?: string } | null>(null);
   const [prefillText, setPrefillText] = useState("");
   const [prefillScene, setPrefillScene] = useState("");
   const t = getI18n(lang);
@@ -58,8 +74,35 @@ export default function ClientPage() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "API error");
+        let errMessage = `HTTP ${res.status} ${res.statusText}`;
+        const rawLogParts: string[] = [
+          `Status: ${res.status} ${res.statusText}`,
+          `URL: ${res.url}`,
+          `Environment: ${process.env.NODE_ENV}`,
+        ];
+
+        try {
+          const errorData: unknown = await res.json();
+          errMessage = getErrorMessage(errorData, res.status, res.statusText);
+          if (
+            typeof errorData === "object" &&
+            errorData !== null &&
+            "traceId" in errorData &&
+            typeof (errorData as { traceId?: unknown }).traceId === "string"
+          ) {
+            errMessage += ` (Trace: ${(errorData as { traceId: string }).traceId})`;
+          }
+          rawLogParts.push(`Response:\n${truncateLog(JSON.stringify(errorData, null, 2))}`);
+        } catch {
+          const textRes = await res.text().catch(() => "No response body");
+          rawLogParts.push(`Response:\n${truncateLog(textRes)}`);
+        }
+
+        setError({
+          message: errMessage,
+          log: truncateLog(rawLogParts.join("\n\n"))
+        });
+        return;
       }
 
       const data: ResultType = await res.json();
@@ -71,11 +114,11 @@ export default function ClientPage() {
       setResult(data);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
-        setError(t.timeoutError);
+        setError({ message: t.timeoutError, log: "Error: Request timeout (AbortError)" });
       } else if (err instanceof Error && err.message) {
-        setError(err.message);
+        setError({ message: err.message, log: truncateLog(err.stack || err.message) });
       } else {
-        setError(t.diagnoseError);
+        setError({ message: t.diagnoseError, log: truncateLog(String(err)) });
       }
     } finally {
       clearTimeout(timeout);
@@ -143,17 +186,35 @@ export default function ClientPage() {
       {error && (
         <div className="mt-6 p-5 rounded-xl bg-kg-layer1-bg border border-kg-layer1-sep flex items-start gap-3 shadow-sm" aria-live="assertive">
           <IconAlertCircle className="w-5 h-5 mt-0.5 shrink-0 text-kg-layer1" />
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 w-full">
             <p className="text-kg-layer1-text text-subhead font-sans-zh font-medium leading-relaxed">
-              {error}
+              {error.message}
             </p>
-            <button 
-              type="button"
-              onClick={() => setError(null)}
-              className="text-footnote text-kg-blue hover:text-kg-blue-hover font-medium font-sans-zh transition-colors self-start cursor-pointer"
-            >
-              {t.close}
-            </button>
+            <div className="flex gap-4 mt-1">
+              {error.log && (
+                <button 
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(error.log || "");
+                      alert(lang === "ja" ? "ログをコピーしました" : "日志已复制");
+                    } catch {
+                      alert(lang === "ja" ? "コピーに失敗しました" : "复制失败，请手动复制");
+                    }
+                  }}
+                  className="text-footnote text-kg-text-3 hover:text-kg-text-1 font-medium font-sans-zh transition-colors cursor-pointer"
+                >
+                  {lang === "ja" ? "ログをコピー" : "复制日志"}
+                </button>
+              )}
+              <button 
+                type="button"
+                onClick={() => setError(null)}
+                className="text-footnote text-kg-blue hover:text-kg-blue-hover font-medium font-sans-zh transition-colors cursor-pointer"
+              >
+                {t.close}
+              </button>
+            </div>
           </div>
         </div>
       )}

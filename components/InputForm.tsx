@@ -15,7 +15,35 @@ interface Props {
 export default function InputForm({ onSubmit, isLoading, externalText, externalScene, lang }: Props) {
   const [text, setText] = useState("");
   const [scene, setScene] = useState("");
+  const [loadingStepIndex, setLoadingStepIndex] = useState(-1);
   const t = getI18n(lang);
+
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    let interval: NodeJS.Timeout;
+
+    if (isLoading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoadingStepIndex(-1); // -1 represent the default "分析中..."
+      
+      // Delay telling users the specific steps, keeps it clean if it finishes fast
+      timeout = setTimeout(() => {
+        setLoadingStepIndex(0);
+        
+        interval = setInterval(() => {
+          setLoadingStepIndex((prev) => 
+            prev < t.input.loadingSteps.length - 1 ? prev + 1 : prev
+          );
+        }, 2200);
+      }, 1500);
+
+    }
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
+  }, [isLoading, t.input.loadingSteps.length]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -85,14 +113,19 @@ export default function InputForm({ onSubmit, isLoading, externalText, externalS
       >
         {isLoading ? (
           <>
-            <svg className="w-5 h-5 animate-spin text-white" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-5 h-5 animate-spin text-white flex-shrink-0 transition-opacity duration-300" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span className="font-sans-jp">{t.input.submitting}</span>
+             <span
+               key={`loading-step-${loadingStepIndex}`} 
+               className={`${lang === 'zh' ? 'font-sans-zh' : 'font-sans-jp'} animate-[fade-in-up_0.3s_ease-out_forwards]`}
+             >
+               {loadingStepIndex === -1 ? t.input.submitting : t.input.loadingSteps[loadingStepIndex]}
+             </span>
           </>
         ) : (
-          <span className="font-sans-jp">{t.input.submit}</span>
+          <span className={`${lang === 'zh' ? 'font-sans-zh' : 'font-sans-jp'} animate-[fade-in_0.3s_ease-out_forwards]`}>{t.input.submit}</span>
         )}
       </button>
     </form>

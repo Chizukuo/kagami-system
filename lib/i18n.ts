@@ -22,8 +22,15 @@ export const I18N = {
       sceneLabel: "场景（上下文）",
       scenePlaceholder: "请输入使用场景或上下文",
       sceneAria: "使用场景",
-      submit: "診断する",
+      submit: "开始诊断",
       submitting: "分析中...",
+      loadingSteps: [
+        "正在分析语法结构...",
+        "正在评估语体适用性...",
+        "正在推敲语用自然度...",
+        "正在生成地道表达...",
+        "即将完成..."
+      ],
     },
     result: {
       summaryTitle: "Summary",
@@ -104,6 +111,13 @@ export const I18N = {
       sceneAria: "使用場面",
       submit: "診断する",
       submitting: "分析中...",
+      loadingSteps: [
+        "文法構造を分析中...",
+        "コーパスの適切さを評価中...",
+        "語用の自然さを推敲中...",
+        "ネイティブの表現を生成中...",
+        "まもなく完了します..."
+      ],
     },
     result: {
       summaryTitle: "Summary",
