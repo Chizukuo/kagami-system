@@ -95,11 +95,39 @@ function buildErrorDetails(error: unknown) {
   return truncateText(String(error), MAX_ERROR_DETAILS_LENGTH);
 }
 
+function hasNumericStatusCode(payload: string, code: 404 | 429 | 503 | 504) {
+  const compact = payload.replace(/\s+/g, "");
+  const normalizedCode = String(code);
+  return (
+    compact.includes(`"code":${normalizedCode}`) ||
+    compact.includes(`"code":"${normalizedCode}"`) ||
+    compact.includes(`"statuscode":${normalizedCode}`) ||
+    compact.includes(`"statuscode":"${normalizedCode}"`) ||
+    compact.includes(`"status":${normalizedCode}`) ||
+    compact.includes(`"status":"${normalizedCode}"`) ||
+    compact.includes(`code:${normalizedCode}`) ||
+    payload.includes(`status code ${normalizedCode}`) ||
+    payload.includes(`http ${normalizedCode}`)
+  );
+}
+
 function getErrorStatusCode(payload: string) {
-  if (payload.includes("429") || payload.includes("resource_exhausted")) {
+  if (hasNumericStatusCode(payload, 429) || payload.includes("resource_exhausted")) {
     return 429;
   }
-  if (payload.includes("etimedout") || payload.includes("timeout") || payload.includes("timed out")) {
+  if (hasNumericStatusCode(payload, 404) || payload.includes("not found")) {
+    return 503;
+  }
+  if (hasNumericStatusCode(payload, 503) || payload.includes("unavailable")) {
+    return 503;
+  }
+  if (
+    hasNumericStatusCode(payload, 504) ||
+    payload.includes("deadline_exceeded") ||
+    payload.includes("etimedout") ||
+    payload.includes("timeout") ||
+    payload.includes("timed out")
+  ) {
     return 504;
   }
   if (
@@ -123,7 +151,14 @@ export async function POST(req: NextRequest) {
     const body: DiagnoseRequest = await req.json();
     lang = isSupportedLanguage(body.lang) ? body.lang : "zh";
 
-    if (!body.text?.trim() || !body.scene?.trim()) {
+    if (typeof body.text !== "string" || typeof body.scene !== "string") {
+      return NextResponse.json(
+        { error: messageByLang(lang, "text 和 scene 必须为字符串", "text と scene は文字列である必要があります") },
+        { status: 400 }
+      );
+    }
+
+    if (!body.text.trim() || !body.scene.trim()) {
       return NextResponse.json(
         { error: messageByLang(lang, "text 和 scene 不能为空", "text と scene は必須です") },
         { status: 400 }
