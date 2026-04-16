@@ -21,14 +21,20 @@ export class GeminiProvider extends BaseProvider {
 
     const modelName = modelOverride || process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview";
 
+    const versionMatch = modelName.match(/(\d+)\.\d+/);
+    const majorVersion = versionMatch ? parseInt(versionMatch[1], 10) : 0;
+    const supportsThinking = majorVersion >= 3 || modelName.includes("thinking");
+
     const result = await this.ai.models.generateContent({
       model: modelName,
       contents: userMessage,
       config: {
         systemInstruction: getSystemPrompt(lang),
-        thinkingConfig: {
-          thinkingLevel: ThinkingLevel.MEDIUM,
-        },
+        ...(supportsThinking && {
+          thinkingConfig: {
+            thinkingLevel: ThinkingLevel.MEDIUM,
+          },
+        }),
         responseMimeType: "application/json",
         responseSchema: RESPONSE_SCHEMA,
       },
