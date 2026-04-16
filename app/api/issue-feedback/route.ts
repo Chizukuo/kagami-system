@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
       vote: body.vote,
       proficiencyLevel: normalizeProficiencyLevel(body.proficiencyLevel),
       issueHash,
+      modelId: body.modelId,
       timestamp: new Date().toISOString(),
       lang: body.lang,
     };

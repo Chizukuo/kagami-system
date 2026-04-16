@@ -61,6 +61,7 @@ I18N = {
         'sidebar_status_waiting': 'Ready to fetch data',
         'tab_hierarchy': '📊 Layer-wise Acceptance Analysis',
         'tab_severity': '🔥 Acceptance × Issue Density',
+        'tab_models': '🤖 Cross-Model Comparison',
         'tab_eval_raw': '📋 Evaluation Data (Raw)',
         'tab_issue_raw': '📋 Issue Feedback (Raw)',
         'table_filter_label': 'Filter:',
@@ -94,6 +95,7 @@ I18N = {
         'sidebar_token_label': '🔐 访问令牌', 'sidebar_token_placeholder': '输入导出令牌',
         'sidebar_fetch_btn': '📂 抓取并分析数据', 'sidebar_status_waiting': '准备就绪',
         'tab_hierarchy': '📊 分层接受度分析', 'tab_severity': '🔥 接受度 × 问题密度',
+        'tab_models': '🤖 跨模型接受率比较',
         'tab_eval_raw': '📋 评估数据（原始）', 'tab_issue_raw': '📋 反馈数据（原始）',
         'table_filter_label': '筛选：', 'table_filter_placeholder': '输入关键词筛选',
         'table_export_btn': '导出 CSV', 'table_count_format': '{} / {}',
@@ -124,6 +126,7 @@ I18N = {
         'sidebar_token_label': '🔐 トークン', 'sidebar_token_placeholder': 'トークンを入力',
         'sidebar_fetch_btn': '📂 取得・分析', 'sidebar_status_waiting': '準備完了',
         'tab_hierarchy': '📊 層別受容率分析', 'tab_severity': '🔥 受容率 × 密度',
+        'tab_models': '🤖 モデル間比較',
         'tab_eval_raw': '📋 評価データ（生）', 'tab_issue_raw': '📋 フィード（生）',
         'table_filter_label': 'フィルタ：', 'table_filter_placeholder': 'キーワード',
         'table_export_btn': 'CSV出力', 'table_count_format': '{} / {}',
@@ -324,14 +327,17 @@ class KagamiAnalyzerWindow(QMainWindow):
     def create_tabs(self):
         self.tab_hierarchy = QWidget()
         self.tab_severity = QWidget()
+        self.tab_models = QWidget()
         self.tab_eval_raw = QWidget()
         self.tab_issue_raw = QWidget()
         self.tabs.addTab(self.tab_hierarchy, get_i18n(self.current_lang, 'tab_hierarchy'))
         self.tabs.addTab(self.tab_severity, get_i18n(self.current_lang, 'tab_severity'))
+        self.tabs.addTab(self.tab_models, get_i18n(self.current_lang, 'tab_models'))
         self.tabs.addTab(self.tab_eval_raw, get_i18n(self.current_lang, 'tab_eval_raw'))
         self.tabs.addTab(self.tab_issue_raw, get_i18n(self.current_lang, 'tab_issue_raw'))
         self.layout_hierarchy = QVBoxLayout(self.tab_hierarchy)
         self.layout_severity = QVBoxLayout(self.tab_severity)
+        self.layout_models = QVBoxLayout(self.tab_models)
         self.layout_eval_raw = QVBoxLayout(self.tab_eval_raw)
         self.layout_issue_raw = QVBoxLayout(self.tab_issue_raw)
         self.create_raw_table_ui(self.layout_eval_raw, 'eval_', 'evaluations.csv')
@@ -386,6 +392,7 @@ class KagamiAnalyzerWindow(QMainWindow):
             self.populate_tables()
             if not self.df_issue.empty:
                 self.plot_hierarchy()
+                self.plot_models()
             if not self.df_eval.empty:
                 self.plot_severity()
 
@@ -442,6 +449,7 @@ class KagamiAnalyzerWindow(QMainWindow):
             self.status_label.setText(get_i18n(self.current_lang, 'fetch_success_status', len(self.df_eval), len(self.df_issue)))
             self.populate_tables()
             self.plot_hierarchy()
+            self.plot_models()
             self.plot_severity()
             QMessageBox.information(self, get_i18n(self.current_lang, 'fetch_success_title'), get_i18n(self.current_lang, 'fetch_success_msg'))
         except requests.RequestException as e:
@@ -524,6 +532,51 @@ class KagamiAnalyzerWindow(QMainWindow):
         fig.tight_layout()
         canvas = FigureCanvas(fig)
         self.layout_hierarchy.addWidget(canvas)
+
+    def plot_models(self):
+        for i in reversed(range(self.layout_models.count())):
+            widget = self.layout_models.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
+        if self.df_issue.empty or 'modelId' not in self.df_issue.columns:
+            lbl = QLabel(get_i18n(self.current_lang, 'chart_hierarchy_empty'))
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl.setStyleSheet("color: #57606a; font-size: 13px;")
+            self.layout_models.addWidget(lbl)
+            return
+
+        # Replace NaN with 'Unknown' if necessary
+        model_series = self.df_issue['modelId'].fillna('Unknown')
+        fig = Figure(figsize=(12, 6.8), dpi=100)
+        ax = fig.add_subplot(111)
+
+        stats = self.df_issue.groupby([model_series, 'layer', 'vote']).size().unstack(fill_value=0)
+        if 'agree' not in stats.columns:
+            stats['agree'] = 0
+        if 'disagree' not in stats.columns:
+            stats['disagree'] = 0
+            
+        stats['Total'] = stats['agree'] + stats['disagree']
+        stats['Rate'] = (stats['agree'] / stats['Total'] * 100).round(1)
+        
+        rates = stats['Rate'].unstack(level='layer')
+        order = ['grammar', 'register', 'pragmatics']
+        rates = rates[[x for x in order if x in rates.columns]]
+        
+        rates.plot(kind='bar', ax=ax, width=0.7)
+        title_text = "Cross-Model Acceptance Rate (%)" if self.current_lang == 'en' else "跨模型接受率比较 (%)" if self.current_lang == 'zh' else "モデル間受容率比較 (%)"
+        ax.set_title(title_text, fontsize=15, fontweight='bold', pad=16, color='#24292f')
+        ax.set_ylabel("Agreement Rate (%)" if self.current_lang == 'en' else "同意率 (%)", fontsize=12, color='#424f5f')
+        ax.set_xlabel("Model ID", fontsize=12, color='#424f5f')
+        ax.tick_params(axis='x', rotation=15, colors='#424f5f', labelsize=11)
+        ax.tick_params(axis='y', colors='#424f5f', labelsize=11)
+        ax.legend(title="Layer", framealpha=0.9, loc='upper right')
+        ax.grid(axis='y', linestyle='--', alpha=0.25, color='#d0d7de')
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        fig.tight_layout()
+        canvas = FigureCanvas(fig)
+        self.layout_models.addWidget(canvas)
 
     def plot_severity(self):
         for i in reversed(range(self.layout_severity.count())):

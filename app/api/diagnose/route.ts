@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { diagnose } from "@/lib/gemini";
+import { diagnose } from "@/lib/diagnostics/registry";
 import { DiagnoseRequest, UILanguage } from "@/lib/types";
 import { isSupportedLanguage } from "@/lib/i18n";
 
@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await diagnose(body.text, body.scene, lang);
+    const result = await diagnose(body.text, body.scene, lang, body.model);
     return NextResponse.json({
       ...result,
       _resId: createResId(),

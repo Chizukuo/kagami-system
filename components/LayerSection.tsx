@@ -10,6 +10,7 @@ interface Props {
   items: GrammarIssue[] | RegisterIssue[] | PragmaticsIssue[];
   emptyMessage: string;
   resId?: string;
+  modelId?: string;
   lang: UILanguage;
 }
 
@@ -28,7 +29,7 @@ function getStoredProficiencyLevel(): ProficiencyLevel | undefined {
 }
 
 export default function LayerSection({
-  title, layerType, items, emptyMessage, resId, lang = "zh"
+  title, layerType, items, emptyMessage, resId, modelId, lang = "zh"
 }: Props) {
   const t = getI18n(lang);
   const [votes, setVotes] = useState<Record<string, IssueVote | undefined>>({});
@@ -56,6 +57,7 @@ export default function LayerSection({
         index,
         vote,
         proficiencyLevel: getStoredProficiencyLevel(),
+        modelId,
         issueOriginal,
         issueText,
         timestamp: new Date().toISOString(),

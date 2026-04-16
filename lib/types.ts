@@ -37,12 +37,14 @@ export interface DiagnosisResult {
   _inputText?: string;
   _inputScene?: string;
   _resId?: string;
+  _modelId?: string;
 }
 
 export interface DiagnoseRequest {
   text: string;
   scene: string;
   lang?: UILanguage;
+  model?: string;
 }
 
 export interface IssueFeedbackPayload {
@@ -54,6 +56,7 @@ export interface IssueFeedbackPayload {
   issueHash?: string;
   issueOriginal?: string;
   issueText?: string;
+  modelId?: string;
   timestamp: string;
   lang?: UILanguage;
 }

@@ -74,6 +74,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
           items={result.grammar}
           emptyMessage={t.result.grammarEmpty}
           resId={result._resId}
+          modelId={result._modelId}
           lang={lang}
         />
 
@@ -84,6 +85,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
           items={result.register}
           emptyMessage={t.result.registerEmpty}
           resId={result._resId}
+          modelId={result._modelId}
           lang={lang}
         />
 
@@ -94,6 +96,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
           items={result.pragmatics}
           emptyMessage={t.result.pragmaticsEmpty}
           resId={result._resId}
+          modelId={result._modelId}
           lang={lang}
         />
       </div>
