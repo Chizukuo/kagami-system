@@ -1,10 +1,31 @@
-"use client";
 import { useState } from "react";
+import { Rating, ProficiencyLevel, UILanguage, VALID_PROFICIENCY_LEVELS } from "@/lib/types";
 import { getI18n } from "@/lib/i18n";
-import { ProficiencyLevel, UILanguage } from "@/lib/types";
+import { getClientSessionId } from "@/lib/session-id";
+
+const IconCheck = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+);
+
+const IconAlertCircle = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+);
+
+const IconMinus = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+);
+
+const IconX = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+);
+
+const IconChevronDown = ({ className = "w-4 h-4", strokeWidth = "2" }: { className?: string, strokeWidth?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+);
 
 interface Props {
   resId: string;
+  modelId: string;
   inputText: string;
   inputScene: string;
   grammarCount: number;
@@ -15,72 +36,18 @@ interface Props {
   lang: UILanguage;
 }
 
-type Rating = "accurate" | "partial" | "inaccurate";
-const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
-const MAX_LOG_LENGTH = 4000;
-
-function getStoredProficiencyLevel(): ProficiencyLevel | "" {
-  if (typeof window === "undefined") {
-    return "";
-  }
+const getStoredProficiencyLevel = (): ProficiencyLevel | "" => {
+  if (typeof window === "undefined") return "";
   const stored = window.localStorage.getItem("kagami.proficiencyLevel");
-  if (!stored) {
-    return "";
+  if (stored && VALID_PROFICIENCY_LEVELS.includes(stored as ProficiencyLevel)) {
+    return stored as ProficiencyLevel;
   }
-  const normalized = stored.toUpperCase() as ProficiencyLevel;
-  return VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : "";
-}
-
-function truncateLog(input: string, maxLength = MAX_LOG_LENGTH) {
-  if (input.length <= maxLength) {
-    return input;
-  }
-  return `${input.slice(0, maxLength)}\n... [truncated]`;
-}
-
-function getErrorMessage(errorData: unknown, fallback: string, status: number) {
-  if (typeof errorData === "object" && errorData !== null && "error" in errorData && typeof (errorData as { error?: unknown }).error === "string") {
-    return `${fallback} [HTTP ${status}]: ${(errorData as { error: string }).error}`;
-  }
-  return `${fallback} [HTTP ${status}]`;
-}
-
-// Flat icon components (minimal, linear style)
-const IconCheck = ({ className = "w-5 h-5" }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={className}>
-    <polyline points="20 6 9 17 4 12"></polyline>
-  </svg>
-);
-
-const IconMinus = ({ className = "w-5 h-5" }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={className}>
-    <line x1="5" y1="12" x2="19" y2="12"></line>
-  </svg>
-);
-
-const IconX = ({ className = "w-5 h-5" }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={className}>
-    <line x1="18" y1="6" x2="6" y2="18"></line>
-    <line x1="6" y1="6" x2="18" y2="18"></line>
-  </svg>
-);
-
-const IconAlertCircle = ({ className = "w-4 h-4" }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={className}>
-    <circle cx="12" cy="12" r="10"></circle>
-    <line x1="12" y1="8" x2="12" y2="12"></line>
-    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-  </svg>
-);
-
-const IconChevronDown = ({ className = "w-5 h-5", strokeWidth = "2" }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <polyline points="6 9 12 15 18 9"></polyline>
-  </svg>
-);
+  return "";
+};
 
 export default function EvaluationWidget({
   resId,
+  modelId,
   inputText,
   inputScene,
   grammarCount,
@@ -92,11 +59,10 @@ export default function EvaluationWidget({
 }: Props) {
   const t = getI18n(lang);
   const [rating, setRating] = useState<Rating | null>(null);
-  const [step, setStep] = useState<1 | "saved" | 2 | "done">(1);
+  const [uiState, setUiState] = useState<"initial" | "expanded" | "done">("initial");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<{ message: string; log?: string } | null>(null);
 
-  // Step 2 optional fields
   const [intentMismatch, setIntentMismatch] = useState(false);
   const [userCorrection, setUserCorrection] = useState("");
   const [feedbackNote, setFeedbackNote] = useState("");
@@ -109,27 +75,22 @@ export default function EvaluationWidget({
   };
 
   const ratingIcon = {
-    accurate: <IconCheck />,
-    partial: <IconMinus />,
-    inaccurate: <IconX />,
+    accurate: <IconCheck className="w-5 h-5" />,
+    partial: <IconMinus className="w-5 h-5" />,
+    inaccurate: <IconX className="w-5 h-5" />,
   };
 
-  const ratingToneClass: Record<Rating, string> = {
-    accurate: "text-kg-success border-kg-success/35 bg-kg-success-bg",
-    partial: "text-kg-blue border-kg-blue/35 bg-kg-blue-bg",
-    inaccurate: "text-kg-layer1 border-kg-layer1-sep bg-kg-layer1-bg",
+  const getCardClass = (r: Rating) => {
+    if (!rating) return "bg-kg-bg hover:bg-kg-bg-2 border-kg-sep text-kg-text cursor-pointer active:scale-95";
+    if (rating !== r) return "bg-transparent border-transparent text-kg-text-4 opacity-50 scale-[0.98] pointer-events-none grayscale-[0.2]";
+    if (r === "accurate") return "bg-kg-success/10 border-kg-success/30 text-kg-success scale-100 shadow-sm pointer-events-none";
+    if (r === "partial") return "bg-kg-blue/10 border-kg-blue/30 text-kg-blue scale-100 shadow-sm pointer-events-none";
+    return "bg-kg-layer1/10 border-kg-layer1/30 text-kg-layer1 scale-100 shadow-sm pointer-events-none";
   };
 
-  const quickRateButtonClass: Record<Rating, string> = {
-    accurate: "hover:bg-kg-success-bg hover:text-kg-success hover:border-kg-success/30 hover:shadow-sm",
-    partial: "hover:bg-kg-blue-bg hover:text-kg-blue hover:border-kg-blue/30 hover:shadow-sm",
-    inaccurate: "hover:bg-kg-layer1-bg hover:text-kg-layer1 hover:border-kg-layer1/30 hover:shadow-sm",
-  };
+  const textareaBaseClass = "w-full min-h-[96px] p-3.5 bg-kg-bg border border-kg-sep rounded-xl text-[14px] text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:ring-4 focus:ring-kg-blue/10 hover:border-kg-sep-2 transition-all duration-200 ease-apple disabled:opacity-60 shadow-sm focus:shadow-md";
 
-  const textareaBaseClass =
-    "w-full min-h-[96px] p-3.5 bg-kg-bg border border-kg-sep rounded-xl text-[14px] text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:ring-4 focus:ring-kg-blue/10 hover:border-kg-sep-2 transition-all duration-200 ease-apple disabled:opacity-60 shadow-sm focus:shadow-md";
-
-  const submitEval = async (currentRating: Rating, skipDetails = false) => {
+  const submitEval = async (currentRating: Rating, isFinal = false) => {
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -138,6 +99,8 @@ export default function EvaluationWidget({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           resId,
+          modelId,
+          sessionId: getClientSessionId(),
           inputText,
           inputScene,
           grammarCount,
@@ -147,53 +110,28 @@ export default function EvaluationWidget({
           summary,
           rating: currentRating,
           proficiencyLevel: proficiencyLevel || undefined,
-          ...(skipDetails ? {} : { intentMismatch, userCorrection, feedbackNote }),
+          ...(isFinal ? { intentMismatch, userCorrection, feedbackNote } : {}),
           lang,
         }),
       });
 
       if (!res.ok) {
-        let errMessage = `${t.evaluation.submitFailed} [HTTP ${res.status}]`;
-        const rawLogParts: string[] = [
-          `Status: ${res.status} ${res.statusText}`,
-          `URL: ${res.url}`,
-          `Environment: ${process.env.NODE_ENV}`,
-        ];
-        try {
-          const errorData: unknown = await res.json();
-          errMessage = getErrorMessage(errorData, t.evaluation.submitFailed, res.status);
-          rawLogParts.push(`Response:\n${truncateLog(JSON.stringify(errorData, null, 2))}`);
-        } catch {
-          const textRes = await res.text().catch(() => "No response body");
-          rawLogParts.push(`Response:\n${truncateLog(textRes)}`);
-        }
-        setSubmitError({
-          message: errMessage,
-          log: truncateLog(rawLogParts.join("\n\n")),
-        });
+        setSubmitError({ message: `${t.evaluation.submitFailed} [HTTP ${res.status}]` });
         return;
       }
-
-      setStep(skipDetails ? "saved" : "done");
-    } catch (error) {
-      if (error instanceof Error && error.message) {
-        setSubmitError({ message: error.message, log: truncateLog(error.stack || error.message) });
-      } else {
-        setSubmitError({ message: t.evaluation.submitFailed, log: truncateLog(String(error)) });
-      }
+      if (isFinal) setUiState("done");
+    } catch {
+      setSubmitError({ message: t.evaluation.submitFailed });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleQuickRate = (r: Rating) => {
+    if (rating) return;
     setRating(r);
-    submitEval(r, true);
-  };
-
-  const openDetails = () => {
-    setStep(2);
-    setSubmitError(null);
+    setUiState("expanded");
+    void submitEval(r, false);
   };
 
   const handleProficiencyChange = (value: string) => {
@@ -201,263 +139,106 @@ export default function EvaluationWidget({
     const next = VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : "";
     setProficiencyLevel(next);
     if (typeof window !== "undefined") {
-      if (next) {
-        window.localStorage.setItem("kagami.proficiencyLevel", next);
-      } else {
-        window.localStorage.removeItem("kagami.proficiencyLevel");
-      }
+      if (next) window.localStorage.setItem("kagami.proficiencyLevel", next);
+      else window.localStorage.removeItem("kagami.proficiencyLevel");
     }
   };
 
-  if (step === "done") {
+  if (uiState === "done") {
     return (
-      <div className="px-4 sm:px-6 py-6 text-center border-t border-kg-sep-2 animate-fade-in-up" aria-live="polite">
-        <div className="mx-auto mb-3 w-8 h-8 rounded-full border border-kg-success/35 bg-kg-success-bg flex items-center justify-center text-kg-success">
-          <IconCheck className="w-4 h-4" />
+      <div className="px-6 py-10 text-center border-t border-kg-sep-2 animate-fade-in-up">
+        <div className="mx-auto mb-4 w-10 h-10 rounded-full bg-kg-success/10 flex items-center justify-center text-kg-success">
+          <IconCheck className="w-5 h-5" />
         </div>
-        <p className="text-footnote text-kg-text-2 font-sans-zh font-medium">{t.evaluation.doneTitle}</p>
-        <p className="mt-1 text-caption text-kg-text-3 font-sans-zh max-w-sm mx-auto leading-relaxed">{t.evaluation.doneSubline}</p>
+        <p className="text-body font-sans-zh font-bold text-kg-text mb-2">{t.evaluation.doneTitle}</p>
+        <p className="text-footnote text-kg-text-3 font-sans-zh max-w-sm mx-auto leading-relaxed">{t.evaluation.doneSubline}</p>
       </div>
     );
   }
 
-  if (step === "saved" && rating) {
-    return (
-      <div className="px-4 sm:px-6 py-5 flex flex-col gap-4 border-t border-kg-sep-2 animate-fade-in-up" aria-live="polite">
-        <div className="flex items-center justify-center gap-2.5 text-center">
-          <div className={`w-5 h-5 flex items-center justify-center rounded-full ${ratingToneClass[rating]}`}>
-            {ratingIcon[rating]}
-          </div>
-          <span className="text-footnote font-sans-zh text-kg-text-2">{t.evaluation.savedTitle}</span>
-          <span className={`px-2.5 py-1 text-caption font-sans-zh font-medium rounded-full border ${ratingToneClass[rating]}`}>
-            {ratingLabel[rating]}
-          </span>
-        </div>
-
-        <p className="text-footnote text-kg-text-2 font-sans-zh leading-relaxed text-center max-w-sm mx-auto">
-          {t.evaluation.savedSubline}
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-2">
-          <button
-            onClick={openDetails}
-            disabled={submitting}
-            className="interaction-press w-full sm:w-auto px-5 py-2 rounded-xl text-footnote font-sans-zh font-medium bg-kg-blue/10 text-kg-blue hover:bg-kg-blue hover:text-white transition-all duration-200 ease-apple cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {t.evaluation.addDetails}
-          </button>
-          <button
-            onClick={() => setStep("done")}
-            disabled={submitting}
-            className="interaction-press w-full sm:w-auto px-4 py-2 rounded-xl text-footnote font-sans-zh font-medium text-kg-text-3 hover:bg-kg-bg-2 hover:text-kg-text transition-all duration-200 ease-apple cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {t.evaluation.finish}
-          </button>
-        </div>
-
-        <p className="text-caption text-kg-text-4 font-sans-zh text-center max-w-xs mx-auto leading-relaxed">
-          {t.evaluation.whyDetails}
-        </p>
-      </div>
-    );
-  }
-
-  if (step === 2 && rating) {
-    return (
-      <div className="px-4 sm:px-6 py-5 flex flex-col gap-4 border-t border-kg-sep-2 animate-fade-in-up" aria-live="polite">
-        <div className="flex items-center justify-center gap-2.5">
-          <div className={`w-5 h-5 flex items-center justify-center rounded-full ${ratingToneClass[rating]}`}>
-            {ratingIcon[rating]}
-          </div>
-          <span className="text-footnote font-sans-zh text-kg-text-2">{t.evaluation.yourRating}</span>
-          <span className={`px-2.5 py-1 text-caption font-sans-zh font-medium rounded-full border ${ratingToneClass[rating]}`}>
-            {ratingLabel[rating]}
-          </span>
-        </div>
-
-        <p className="text-footnote text-kg-text-3 font-sans-zh text-center max-w-sm mx-auto leading-relaxed">
-          {t.evaluation.detailIntro}
-        </p>
-
-        {submitError && (
-          <div className="rounded-xl border border-kg-layer1-sep bg-kg-layer1-bg px-3.5 py-3 text-footnote text-kg-layer1-text font-sans-zh flex items-start gap-2 max-w-sm mx-auto w-full shadow-sm">
-            <IconAlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-kg-layer1" />
-            <div className="flex flex-col gap-1 w-full">
-              <span>{submitError.message}</span>
-              {submitError.log && (
-                <button 
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(submitError.log || "");
-                      alert(lang === "ja" ? "ログをコピーしました" : "日志已复制");
-                    } catch {
-                      alert(lang === "ja" ? "コピーに失敗しました" : "复制失败，请手动复制");
-                    }
-                  }}
-                  className="text-caption text-kg-blue hover:text-kg-blue-hover font-medium bg-transparent border-none p-0 cursor-pointer self-start"
-                >
-                  {lang === "ja" ? "ログをコピー" : "复制日志"}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        <label className="interaction-press flex items-start gap-3 cursor-pointer px-3.5 py-3 hover:bg-kg-bg-2/50 rounded-xl border border-transparent hover:border-kg-sep/50 transition-all duration-200 ease-apple">
-          <input
-            type="checkbox"
-            checked={intentMismatch}
-            onChange={(e) => setIntentMismatch(e.target.checked)}
-            disabled={submitting}
-            className="w-4 h-4 accent-(--kg-blue) cursor-pointer mt-0.5"
-          />
-          <div className="flex flex-col gap-0.5">
-            <span className="text-footnote font-sans-zh text-kg-text-2">{t.evaluation.intentMismatch}</span>
-            <span className="text-caption font-sans-zh text-kg-text-4">{t.evaluation.intentMismatchHint}</span>
-          </div>
-        </label>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-footnote font-sans-zh text-kg-text-3 px-1">{t.evaluation.proficiencyLabel}</label>
-          <div className="relative group">
-            <select
-              value={proficiencyLevel}
-              onChange={(e) => handleProficiencyChange(e.target.value)}
-              disabled={submitting}
-              className="appearance-none w-full h-11 pl-3.5 pr-10 bg-kg-bg border border-kg-sep rounded-xl text-[14px] text-kg-text outline-none focus:border-kg-blue focus:ring-4 focus:ring-kg-blue/10 hover:border-kg-sep-2 shadow-sm focus:shadow-md transition-all duration-200 ease-apple disabled:opacity-60 cursor-pointer"
-            >
-              <option value="">{t.evaluation.proficiencyPlaceholder}</option>
-              <option value="N5">N5</option>
-              <option value="N4">N4</option>
-              <option value="N3">N3</option>
-              <option value="N2">N2</option>
-              <option value="N1">N1</option>
-              <option value="N1_PLUS">{t.evaluation.proficiencyN1Plus}</option>
-              <option value="UNKNOWN">{t.evaluation.proficiencyUnknown}</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-kg-text-4 group-hover:text-kg-text-3 transition-colors">
-              <IconChevronDown className="w-4 h-4" strokeWidth="2.5" />
-            </div>
-          </div>
-          <p className="text-caption text-kg-text-4 font-sans-zh px-1">{t.evaluation.proficiencyHint}</p>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between gap-2 px-1">
-            <label className="text-footnote font-sans-zh text-kg-text-3">{t.evaluation.betterExpressionLabel}</label>
-            <span className="text-mono-label font-mono text-kg-text-4">{userCorrection.length}/2000</span>
-          </div>
-          <textarea
-            value={userCorrection}
-            onChange={(e) => setUserCorrection(e.target.value)}
-            maxLength={2000}
-            disabled={submitting}
-            placeholder={t.evaluation.betterExpressionPlaceholder}
-            className={`${textareaBaseClass} font-sans-jp`}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between gap-2 px-1">
-            <label className="text-footnote font-sans-zh text-kg-text-3">{t.evaluation.feedbackLabel}</label>
-            <span className="text-mono-label font-mono text-kg-text-4">{feedbackNote.length}/500</span>
-          </div>
-          <textarea
-            value={feedbackNote}
-            onChange={(e) => setFeedbackNote(e.target.value)}
-            maxLength={500}
-            disabled={submitting}
-            placeholder={t.evaluation.feedbackPlaceholder}
-            className={`${textareaBaseClass} min-h-21 font-sans-zh`}
-          />
-        </div>
-
-        <div className="flex gap-3 justify-center mt-2">
-          <button
-            onClick={() => submitEval(rating, false)}
-            disabled={submitting}
-            className="interaction-press shadow-sm hover:shadow-md px-5 py-2.5 rounded-xl text-footnote font-sans-zh font-medium bg-kg-blue text-white hover:bg-kg-blue-hover active:bg-kg-blue-pressed disabled:opacity-60 transition-all duration-200 ease-apple cursor-pointer disabled:cursor-not-allowed"
-          >
-            {submitting ? t.evaluation.submitting : t.evaluation.submit}
-          </button>
-          <button
-            onClick={() => setStep("saved")}
-            disabled={submitting}
-            className="interaction-press px-5 py-2.5 rounded-xl text-footnote font-sans-zh text-kg-text-2 hover:bg-kg-bg-2 border border-transparent hover:border-kg-sep hover:text-kg-text disabled:opacity-60 transition-all duration-200 ease-apple cursor-pointer disabled:cursor-not-allowed"
-          >
-            {t.evaluation.back}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Step 1
   return (
-    <div className="px-4 sm:px-6 py-6 flex flex-col items-center gap-4 border-t border-kg-sep-2 animate-fade-in-up">
-      <div className="text-center space-y-1.5">
-        <p className="text-footnote text-kg-text-2 font-sans-zh font-medium text-center max-w-sm leading-relaxed">
-          {t.evaluation.question}
-        </p>
-        <p className="text-caption text-kg-text-3 font-sans-zh text-center max-w-sm leading-relaxed">
-          {t.evaluation.quickHint}
+    <div className="border-t border-kg-sep-2 pt-8 pb-6 animate-fade-in-up">
+      <div className="text-center mb-6">
+        <h3 className="text-[17px] font-sans-zh font-bold text-kg-text-2 mb-2">
+          {rating ? t.evaluation.savedTitle : t.evaluation.question}
+        </h3>
+        <p className="text-footnote text-kg-text-4 font-sans-zh">
+          {rating ? t.evaluation.savedSubline : t.evaluation.quickHint}
         </p>
       </div>
 
-      <div className="w-full max-w-xl flex flex-wrap justify-center gap-2">
-        <button
-          onClick={() => handleQuickRate("accurate")}
-          disabled={submitting}
-          className={`interaction-press px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-all duration-200 ease-apple cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.accurate}`}
-        >
-          <IconCheck className="w-4 h-4" />
-          <span>{t.evaluation.accurate}</span>
-        </button>
-        <button
-          onClick={() => handleQuickRate("partial")}
-          disabled={submitting}
-          className={`interaction-press px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-all duration-200 ease-apple cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.partial}`}
-        >
-          <IconMinus className="w-4 h-4" />
-          <span>{t.evaluation.partial}</span>
-        </button>
-        <button
-          onClick={() => handleQuickRate("inaccurate")}
-          disabled={submitting}
-          className={`interaction-press px-4 py-2 text-footnote font-sans-zh border border-kg-sep rounded-xl bg-kg-bg transition-all duration-200 ease-apple cursor-pointer flex items-center justify-center gap-2 text-kg-text disabled:opacity-60 disabled:cursor-not-allowed ${quickRateButtonClass.inaccurate}`}
-        >
-          <IconX className="w-4 h-4" />
-          <span>{t.evaluation.inaccurate}</span>
-        </button>
+      <div className="max-w-2xl mx-auto flex gap-3 px-4">
+        {(["accurate", "partial", "inaccurate"] as Rating[]).map((r) => (
+          <button
+            key={r}
+            disabled={rating !== null}
+            onClick={() => handleQuickRate(r)}
+            className={`flex-1 flex flex-col items-center justify-center py-5 sm:py-6 rounded-2xl border transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${getCardClass(r)}`}
+          >
+            <div className="mb-2">{ratingIcon[r]}</div>
+            <span className="text-footnote font-sans-zh font-medium">{ratingLabel[r]}</span>
+          </button>
+        ))}
       </div>
-      {submitError && (
-        <div className="w-full rounded-xl border border-kg-layer1-sep bg-kg-layer1-bg px-3.5 py-3 text-footnote text-kg-layer1-text font-sans-zh flex items-start gap-2 max-w-sm">
-          <IconAlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-kg-layer1" />
-          <div className="flex flex-col gap-1 w-full">
-            <span>{submitError.message}</span>
-            {submitError.log && (
-              <button 
-                type="button"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(submitError.log || "");
-                    alert(lang === "ja" ? "ログをコピーしました" : "日志已复制");
-                  } catch {
-                    alert(lang === "ja" ? "コピーに失敗しました" : "复制失败，请手动复制");
-                  }
-                }}
-                className="text-caption text-kg-blue hover:text-kg-blue-hover font-medium bg-transparent border-none p-0 cursor-pointer self-start"
-              >
-                {lang === "ja" ? "ログをコピー" : "复制日志"}
-              </button>
-            )}
+
+      <div className={`transition-all duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] overflow-hidden flex flex-col items-center ${uiState === "expanded" ? "max-h-[1000px] opacity-100 mt-8" : "max-h-0 opacity-0 mt-0 pointer-events-none"}`}>
+        <div className="w-full max-w-2xl px-4 flex flex-col gap-6">
+          <div className="w-10 h-1 bg-kg-sep-2 rounded-full mx-auto opacity-50"></div>
+          <p className="text-footnote text-kg-text-3 font-sans-zh text-center mt-2">{t.evaluation.detailIntro}</p>
+
+          {submitError && (
+             <div className="text-center text-caption text-kg-layer1 font-sans-zh mt-2 bg-kg-layer1-bg border border-kg-layer1-sep rounded-lg py-2 px-3 shadow-sm flex items-center justify-center gap-2">
+               <IconAlertCircle className="w-4 h-4 text-kg-layer1 shrink-0" />
+               {submitError.message}
+             </div>
+          )}
+
+          <label className="group flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-kg-bg-2 transition-colors border border-transparent">
+            <input type="checkbox" checked={intentMismatch} onChange={(e) => setIntentMismatch(e.target.checked)} disabled={submitting} className="w-5 h-5 accent-[var(--kg-blue)] cursor-pointer mt-0.5 rounded transition-transform group-active:scale-90" />
+            <div className="flex flex-col">
+              <span className="text-subhead font-sans-zh text-kg-text-2 font-semibold tracking-wide">{t.evaluation.intentMismatch}</span>
+              <span className="text-caption font-sans-zh text-kg-text-4 mt-1 leading-[1.6]">{t.evaluation.intentMismatchHint}</span>
+            </div>
+          </label>
+
+          <div className="flex flex-col gap-2 pl-1">
+            <label className="text-footnote font-sans-zh text-kg-text-3 font-medium uppercase tracking-wider">{t.evaluation.proficiencyLabel}</label>
+            <div className="relative group">
+              <select value={proficiencyLevel} onChange={(e) => handleProficiencyChange(e.target.value)} disabled={submitting} className="appearance-none w-full h-12 pl-4 pr-10 bg-kg-bg border border-kg-sep rounded-xl text-footnote text-kg-text outline-none focus:border-kg-blue focus:ring-4 focus:ring-kg-blue/10 hover:border-kg-sep-2 shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-60">
+                <option value="">{t.evaluation.proficiencyPlaceholder}</option>
+                <option value="N5">N5</option>
+                <option value="N4">N4</option>
+                <option value="N3">N3</option>
+                <option value="N2">N2</option>
+                <option value="N1">N1</option>
+                <option value="N1_PLUS">{t.evaluation.proficiencyN1Plus}</option>
+                <option value="UNKNOWN">{t.evaluation.proficiencyUnknown}</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-kg-text-4 group-hover:text-kg-text-3">
+                <IconChevronDown className="w-4 h-4" strokeWidth="3" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 pl-1">
+            <label className="text-footnote font-sans-zh text-kg-text-3 font-medium uppercase tracking-wider">{t.evaluation.betterExpressionLabel}</label>
+            <textarea value={userCorrection} onChange={(e) => setUserCorrection(e.target.value)} maxLength={2000} disabled={submitting} placeholder={t.evaluation.betterExpressionPlaceholder} className={`${textareaBaseClass} font-sans-jp`} />
+          </div>
+
+          <div className="flex flex-col gap-2 pl-1">
+            <label className="text-footnote font-sans-zh text-kg-text-3 font-medium uppercase tracking-wider">{t.evaluation.feedbackLabel}</label>
+            <textarea value={feedbackNote} onChange={(e) => setFeedbackNote(e.target.value)} maxLength={500} disabled={submitting} placeholder={t.evaluation.feedbackPlaceholder} className={`${textareaBaseClass} min-h-[96px] font-sans-zh`} />
+          </div>
+
+          <div className="flex gap-4 mt-6 justify-center sm:justify-end">
+            <button onClick={() => rating && submitEval(rating, true)} disabled={submitting} className="w-full sm:w-auto px-10 py-3.5 rounded-2xl text-footnote font-sans-zh font-bold bg-kg-text text-kg-bg shadow-sm hover:shadow-md hover:bg-[var(--kg-text-2)] active:scale-[0.98] transition-all flex items-center justify-center min-w-[140px] disabled:opacity-60 disabled:scale-100 disabled:shadow-none">
+              {submitting ? (
+                <svg className="w-5 h-5 animate-spin text-kg-bg flex-shrink-0" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              ) : t.evaluation.submit}
+            </button>
           </div>
         </div>
-      )}
-      <p className="text-caption text-kg-text-4 font-sans-zh leading-relaxed text-center max-w-sm">
-        {t.evaluation.consent}
-      </p>
+      </div>
     </div>
   );
 }

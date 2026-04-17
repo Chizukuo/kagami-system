@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { ProficiencyLevel } from "@/lib/types";
+import { ProficiencyLevel, Rating, VALID_PROFICIENCY_LEVELS } from "@/lib/types";
 
 interface KvBinding {
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
 }
 
-type Rating = "accurate" | "partial" | "inaccurate";
-const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
 const MAX_RES_ID_LENGTH = 128;
 
 interface EvalPayload {
@@ -29,6 +27,8 @@ interface EvalPayload {
   intentMismatch?: boolean;
   userCorrection?: string;
   feedbackNote?: string;
+  modelId?: string;
+  sessionId?: string;
 }
 
 function deriveSeverityLevel(grammarCount: number, registerCount: number, pragmaticsCount: number): Rating {
@@ -116,6 +116,8 @@ export async function POST(req: NextRequest) {
     const record = {
       ...body,
       resId,
+      modelId: body.modelId || "unknown",
+      sessionId: body.sessionId || "unknown",
       // severityLevel: LLM's assessment of input quality (issue count-based).
       // This is NOT comparable to user `rating`, which measures diagnosis acceptance.
       // They measure different constructs and should not be directly cross-tabulated

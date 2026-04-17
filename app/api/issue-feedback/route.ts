@@ -30,7 +30,7 @@ async function computeIssueHash(issueOriginal: string, issueText: string): Promi
   const bytes = new TextEncoder().encode(combined);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(digest))
-    .slice(0, 4)
+    .slice(0, 16)
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 }
@@ -82,12 +82,15 @@ export async function POST(req: NextRequest) {
     const key = `issuefb_${safeResId}_${body.layer}_${issueIndex}`;
     const record: IssueFeedbackPayload = {
       resId: safeResId,
-      layer: body.layer,
+      layer: body.layer as IssueLayer,
       index: issueIndex,
-      vote: body.vote,
+      vote: body.vote as IssueVote,
       proficiencyLevel: normalizeProficiencyLevel(body.proficiencyLevel),
       issueHash,
+      issueOriginal,
+      issueText,
       modelId: body.modelId,
+      sessionId: body.sessionId,
       timestamp: new Date().toISOString(),
       lang: body.lang,
     };

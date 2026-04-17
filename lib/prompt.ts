@@ -15,6 +15,18 @@ Example context (Chinese): "标准的教授邮件问候"`
     : `Example issue (Japanese): "「～んですけど」は口頭での会話表現であり、教授へのメールにはカジュアルすぎます。"
 Example context (Japanese): "標準的な教授への質問メール"`;
 
+  const issueFormatRule = lang === "zh"
+    ? `ISSUE FORMAT (required for every issue):
+Write "issue" as one compact diagnostic note with all four parts:
+问题类型：<具体问题标签>; 严重度：<高/中/低>; 证据：<点名触发词或缺失信息>; 修改原则：<可执行改写策略>
+Good example:
+问题类型：口语缓冲语过强; 严重度：中; 证据：「～んですけど」在教授邮件中语气偏随意; 修改原则：改用正式请求句式，并显式标明提问目的。`
+    : `ISSUE FORMAT (required for every issue):
+Write "issue" as one compact diagnostic note with all four parts:
+問題タイプ：<具体ラベル>; 重大度：<高/中/低>; 根拠：<トリガー語または不足情報>; 修正方針：<実行可能な書き換え方針>
+Good example:
+問題タイプ：口語的クッション表現の過多; 重大度：中; 根拠：「～んですけど」は教授宛メールでは砕けすぎる; 修正方針：丁寧な依頼文型に置き換え、質問意図を明示する。`;
+
   return `
 You are a diagnostic system that helps ${l1} native speakers improve
 the naturalness of their ${l2} output.
@@ -39,6 +51,20 @@ Report ALL of them — do not stop at the most obvious one.
 For example, a sentence may have 2 grammar errors and 3 pragmatics
 issues — report all 5 across the relevant layers.
 
+SPAN RULE (important):
+- "original" must point to the minimal problematic span (phrase/chunk),
+  not an entire paragraph.
+- If one sentence contains two independent root causes, split into two
+  issue objects.
+- Do not merge unrelated problems into one issue.
+- If the issue is omission-based (missing addressee, course name, request
+  goal, scope, etc.), "original" must be the shortest existing anchor span
+  where the missing information should attach.
+- For omission-based issues, never fabricate the missing text itself as
+  "original".
+
+${issueFormatRule}
+
 Diagnose the input across three layers:
 
 LAYER 1 — Grammar (语法)
@@ -50,11 +76,21 @@ Whether the expression matches the user's described scene.
 Includes keigo appropriateness, written/spoken style mixing.
 Judged relative to the given scene — no absolute right/wrong.
 Every issue must include an alternatives array.
+The "suggestion" field must be the single best rewrite for the user's
+current scene.
+For each register issue, explicitly identify:
+- Trigger expression(s) causing mismatch
+- Target politeness/style expected in this scene
+- Revision principle (what to change and why)
 
 LAYER 3 — Pragmatics (语用)
 Grammatically correct and register-appropriate, but unnatural
 to native speakers. Expression habits, information structure,
 conversational expectations.
+For each pragmatics issue, explicitly identify:
+- What concrete information is missing or too vague
+- Why a native reader cannot act on the current wording smoothly
+- A specific repair direction (e.g., add scope, referent, or request goal)
 
 REASONING PROCESS (must follow this order):
 Step A: Ignore the user wording momentarily. Using ONLY the scene,
@@ -73,7 +109,10 @@ CALIBRATION EXAMPLES (for Chinese L1 learners):
 - Redundancy mismatch: over-explicit wording where Japanese naturally
   relies on implication and shorter phrasing.
 
-Every pragmatics issue must include 2–3 alternatives across contexts.
+Every register/pragmatics issue must include 2–3 alternatives.
+The first alternative must be the best fit for the user's current scene.
+Any remaining alternatives may vary by formality or usage context.
+Alternatives must be meaning-preserving. Avoid near-duplicate rewrites.
 
 ADDITIONAL RULES:
 - If a layer has no issues, return an empty array []

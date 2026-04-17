@@ -15,35 +15,7 @@ interface Props {
 export default function InputForm({ onSubmit, isLoading, externalText, externalScene, lang }: Props) {
   const [text, setText] = useState("");
   const [scene, setScene] = useState("");
-  const [loadingStepIndex, setLoadingStepIndex] = useState(-1);
   const t = getI18n(lang);
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    let interval: NodeJS.Timeout;
-
-    if (isLoading) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoadingStepIndex(-1); // -1 represent the default "分析中..."
-      
-      // Delay telling users the specific steps, keeps it clean if it finishes fast
-      timeout = setTimeout(() => {
-        setLoadingStepIndex(0);
-        
-        interval = setInterval(() => {
-          setLoadingStepIndex((prev) => 
-            prev < t.input.loadingSteps.length - 1 ? prev + 1 : prev
-          );
-        }, 2200);
-      }, 1500);
-
-    }
-
-    return () => {
-      clearTimeout(timeout);
-      clearInterval(interval);
-    };
-  }, [isLoading, t.input.loadingSteps.length]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -66,50 +38,56 @@ export default function InputForm({ onSubmit, isLoading, externalText, externalS
 
   return (
     <form onSubmit={handleFormSubmit} className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <label htmlFor="text" className="text-subhead font-medium font-sans-zh text-kg-text-2">{t.input.textLabel}</label>
-          <span className={`text-caption font-mono tracking-wider transition-colors ${text.length > 1800 ? 'text-kg-layer2' : text.length > 1500 ? 'text-kg-text-4' : 'text-kg-text-4'}`}>
-            {text.length} / 2000
-          </span>
+      {/* Unified Input Card matching Apple's grouped style */}
+      <div className={`bg-kg-bg border border-kg-sep rounded-2xl overflow-hidden transition-shadow shadow-sm focus-within:border-kg-blue focus-within:shadow-focus focus-within:ring-1 focus-within:ring-kg-blue ${isLoading ? 'opacity-50 pointer-events-none grayscale-[0.2]' : ''}`}>
+        
+        {/* Text Area Section */}
+        <div className="relative flex flex-col">
+          <textarea
+            id="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            maxLength={2000}
+            disabled={isLoading}
+            placeholder={t.input.textPlaceholder}
+            aria-label={t.input.textAria}
+            className={`w-full min-h-[180px] p-5 pb-8 outline-none resize-none ${lang === 'zh' ? 'font-sans-zh' : 'font-sans-jp'} text-body antialiased text-kg-text placeholder-kg-text-4 bg-transparent leading-[1.625] tracking-[0.01em]`}
+          />
+          {/* Character count: only visible when user starts typing to reduce noise */}
+          <div className={`absolute bottom-3 right-4 transition-opacity duration-300 ${text.length > 0 ? 'opacity-100' : 'opacity-0'}`}>
+            <span className={`text-[13px] leading-none font-mono antialiased transition-colors ${text.length > 1800 ? 'text-kg-layer2 font-medium' : 'text-kg-text-4'}`}>
+              {text.length} / 2000
+            </span>
+          </div>
         </div>
-        <textarea
-          id="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          maxLength={2000}
-          disabled={isLoading}
-          placeholder={t.input.textPlaceholder}
-          aria-label={t.input.textAria}
-          className={`w-full min-h-35 p-4 bg-kg-bg border border-kg-sep rounded-xl outline-none focus:ring-0 focus:border-kg-blue focus:shadow-focus transition-all resize-none shadow-sm font-sans-zh text-callout text-kg-text placeholder-kg-text-3 ${isLoading ? 'opacity-50 pointer-events-none bg-kg-bg-2' : ''}`}
-        />
-      </div>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <label htmlFor="scene" className="text-subhead font-medium font-sans-zh text-kg-text-2">{t.input.sceneLabel}</label>
-          <span className={`text-caption font-mono tracking-wider transition-colors ${scene.length > 180 ? 'text-kg-layer2' : scene.length > 150 ? 'text-kg-text-4' : 'text-kg-text-4'}`}>
-            {scene.length} / 200
-          </span>
+        {/* Subtle Divider inline to left padding */}
+        <div className="h-px bg-kg-sep ml-5" />
+
+        {/* Scene Input Row like an iOS table row */}
+        <div className="flex items-center relative group gap-3">
+          <label htmlFor="scene" className={`pl-5 py-4 text-subhead font-medium ${lang === 'zh' ? 'font-sans-zh' : 'font-sans-jp'} tracking-tight text-kg-text-2 shrink-0 whitespace-nowrap select-none transition-colors group-focus-within:text-kg-blue`}>
+            {t.input.sceneLabel}
+          </label>
+          <input
+            id="scene"
+            type="text"
+            value={scene}
+            onChange={(e) => setScene(e.target.value)}
+            maxLength={200}
+            disabled={isLoading}
+            placeholder={t.input.scenePlaceholder}
+            aria-label={t.input.sceneAria}
+            className={`w-full py-4 pr-5 outline-none bg-transparent ${lang === 'zh' ? 'font-sans-zh' : 'font-sans-jp'} text-body antialiased text-kg-text placeholder-kg-text-4 leading-normal tracking-[0.01em]`}
+          />
         </div>
-        <input
-          id="scene"
-          type="text"
-          value={scene}
-          onChange={(e) => setScene(e.target.value)}
-          maxLength={200}
-          disabled={isLoading}
-          placeholder={t.input.scenePlaceholder}
-          aria-label={t.input.sceneAria}
-          className={`w-full p-4 bg-kg-bg border border-kg-sep rounded-xl outline-none focus:ring-0 focus:border-kg-blue focus:shadow-focus transition-all shadow-sm font-sans-zh text-callout text-kg-text placeholder-kg-text-3 ${isLoading ? 'opacity-50 pointer-events-none bg-kg-bg-2' : ''}`}
-        />
       </div>
 
       <button
         type="submit"
         disabled={isDisabled}
         aria-label={isLoading ? t.loading : t.input.submit}
-        className="mt-4 w-full min-h-touch py-4 bg-kg-blue text-subhead sm:text-headline text-white font-medium rounded-xl shadow-md hover:bg-kg-blue-hover active:bg-kg-blue-pressed disabled:bg-kg-text-4 disabled:cursor-not-allowed interaction-press flex items-center justify-center space-x-2 group"
+        className="mt-2 w-full min-h-touch py-4 bg-kg-blue text-headline text-white font-medium antialiased rounded-2xl shadow-sm hover:shadow-md hover:bg-kg-blue-hover active:bg-kg-blue-pressed active:scale-[0.98] disabled:bg-kg-text-4 disabled:opacity-60 disabled:active:scale-100 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
       >
         {isLoading ? (
           <>
@@ -117,11 +95,8 @@ export default function InputForm({ onSubmit, isLoading, externalText, externalS
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-             <span
-               key={`loading-step-${loadingStepIndex}`} 
-               className={`${lang === 'zh' ? 'font-sans-zh' : 'font-sans-jp'} animate-[fade-in-up_0.3s_ease-out_forwards]`}
-             >
-               {loadingStepIndex === -1 ? t.input.submitting : t.input.loadingSteps[loadingStepIndex]}
+             <span className={lang === 'zh' ? 'font-sans-zh' : 'font-sans-jp'}>
+               {t.input.submitting}
              </span>
           </>
         ) : (

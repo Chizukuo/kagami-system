@@ -92,11 +92,15 @@ export async function GET(req: NextRequest) {
     const format = normalizeFormat(searchParams.get("format"));
 
     const requiredToken = (process.env.KAGAMI_EXPORT_TOKEN ?? "").trim();
-    if (requiredToken) {
-      const token = (searchParams.get("token") ?? "").trim();
-      if (token !== requiredToken) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-      }
+    if (!requiredToken) {
+      return NextResponse.json({ error: "Export feature is disabled on this server" }, { status: 403 });
+    }
+
+    const authHeader = req.headers.get("authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+    if (token !== requiredToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (format === "csv" && dataset === "all") {
@@ -132,6 +136,8 @@ export async function GET(req: NextRequest) {
       const csv = toCsv(evaluations, [
         "_kvKey",
         "resId",
+        "sessionId",
+        "modelId",
         "timestamp",
         "lang",
         "proficiencyLevel",
@@ -161,6 +167,8 @@ export async function GET(req: NextRequest) {
     const csv = toCsv(issueFeedback, [
       "_kvKey",
       "resId",
+      "sessionId",
+      "modelId",
       "layer",
       "index",
       "vote",

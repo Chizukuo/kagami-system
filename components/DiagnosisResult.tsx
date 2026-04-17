@@ -47,19 +47,6 @@ export default function DiagnosisResult({ result, lang }: Props) {
       {/* Native Output elevated to the top! */}
       <NativeVersion nativeVersion={result.native_version} lang={lang} />
 
-      {/* Evaluation Widget - Lightweight footer */}
-      <EvaluationWidget
-        resId={result._resId ?? ""}
-        inputText={result._inputText ?? ""}
-        inputScene={result._inputScene ?? ""}
-        grammarCount={result.grammar.length}
-        registerCount={result.register.length}
-        pragmaticsCount={result.pragmatics.length}
-        nativeVersion={result.native_version}
-        summary={result.summary}
-        lang={lang}
-      />
-
       {/* Details Section - Full prominence */}
       <div className="mt-8 flex flex-col gap-6">
         <h2 className="text-[17px] font-display-zh font-bold text-kg-text pb-3 border-b border-kg-sep text-center">
@@ -97,6 +84,22 @@ export default function DiagnosisResult({ result, lang }: Props) {
           emptyMessage={t.result.pragmaticsEmpty}
           resId={result._resId}
           modelId={result._modelId}
+          lang={lang}
+        />
+      </div>
+
+      {/* Evaluation Widget - Shifted to the end for progressive read flow */}
+      <div className="mt-12">
+        <EvaluationWidget
+          resId={result._resId ?? ""}
+          modelId={result._modelId ?? ""}
+          inputText={result._inputText ?? ""}
+          inputScene={result._inputScene ?? ""}
+          grammarCount={result.grammar.length}
+          registerCount={result.register.length}
+          pragmaticsCount={result.pragmatics.length}
+          nativeVersion={result.native_version}
+          summary={result.summary}
           lang={lang}
         />
       </div>

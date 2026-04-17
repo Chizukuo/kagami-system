@@ -23,9 +23,9 @@ if sys.platform == 'win32':
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QTabWidget, QTableWidget,
-    QTableWidgetItem, QMessageBox, QHeaderView, QFileDialog
+    QTableWidgetItem, QMessageBox, QHeaderView, QFileDialog, QCheckBox
 )
-from PyQt6.QtCore import Qt, QSettings, pyqtSignal, QObject
+from PyQt6.QtCore import Qt, QSettings, pyqtSignal, QObject, QThread
 from PyQt6.QtGui import QFont
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -33,13 +33,38 @@ import seaborn as sns
 
 
 # ════════════════════════════════════════════════════════════════════════════════
-# Language Switcher Signal
+# Language Switcher Signal & Threading
 # ════════════════════════════════════════════════════════════════════════════════
 
 class LanguageSignal(QObject):
     changed = pyqtSignal(str)
 
 lang_signal = LanguageSignal()
+
+class FetchDataThread(QThread):
+    finished_success = pyqtSignal(dict)
+    finished_error = pyqtSignal(str, str)
+
+    def __init__(self, endpoint, token=None, parent=None):
+        super().__init__(parent)
+        self.endpoint = endpoint
+        self.token = token
+
+    def run(self):
+        try:
+            headers = {}
+            if self.token:
+                headers['Authorization'] = f'Bearer {self.token}'
+            resp = requests.get(self.endpoint, headers=headers, timeout=20)
+            resp.raise_for_status()
+            data = resp.json()
+            self.finished_success.emit(data)
+        except requests.RequestException as e:
+            self.finished_error.emit('error_network', str(e))
+        except ValueError as e:
+            self.finished_error.emit('error_json', str(e))
+        except Exception as e:
+            self.finished_error.emit('error_unexpected', str(e))
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -57,6 +82,7 @@ I18N = {
         'sidebar_api_placeholder': 'e.g., https://kagami.chizunet.cc',
         'sidebar_token_label': '🔐 Access Token',
         'sidebar_token_placeholder': 'Enter export token',
+        'sidebar_remember_token': 'Remember Token',
         'sidebar_fetch_btn': '📂 Fetch & Analyze Data',
         'sidebar_status_waiting': 'Ready to fetch data',
         'tab_hierarchy': '📊 Layer-wise Acceptance Analysis',
@@ -76,6 +102,9 @@ I18N = {
         'error_processing': 'Processing Error', 'error_processing_msg': 'Processing failed: {}',
         'error_table_fill': 'Table Error', 'error_table_fill_msg': 'Cannot populate: {}',
         'error_export_empty': 'Cannot Export', 'error_export_empty_msg': 'No data to export.',
+        'error_unexpected': 'Error', 'error_unexpected_msg': 'Unexpected error: {}',
+        'chart_export_btn': 'Export Chart',
+        'export_success': 'Export Success', 'export_success_msg': 'Chart successfully saved to:\n{}',
         'chart_hierarchy_title': 'Feedback Distribution by Layer',
         'chart_hierarchy_ylabel': 'Number of Responses', 'chart_hierarchy_xlabel': 'Language Layer',
         'chart_hierarchy_agree': 'Agree', 'chart_hierarchy_disagree': 'Disagree',
@@ -93,6 +122,7 @@ I18N = {
         'sidebar_title': '数据连接',
         'sidebar_api_label': '🔗 API 基础地址', 'sidebar_api_placeholder': '例如：https://kagami.chizunet.cc',
         'sidebar_token_label': '🔐 访问令牌', 'sidebar_token_placeholder': '输入导出令牌',
+        'sidebar_remember_token': '记住令牌',
         'sidebar_fetch_btn': '📂 抓取并分析数据', 'sidebar_status_waiting': '准备就绪',
         'tab_hierarchy': '📊 分层接受度分析', 'tab_severity': '🔥 接受度 × 问题密度',
         'tab_models': '🤖 跨模型接受率比较',
@@ -107,6 +137,9 @@ I18N = {
         'error_processing': '处理错误', 'error_processing_msg': '处理失败：{}',
         'error_table_fill': '表格错误', 'error_table_fill_msg': '无法填充：{}',
         'error_export_empty': '无法导出', 'error_export_empty_msg': '无可导出数据。',
+        'error_unexpected': '错误', 'error_unexpected_msg': '意外错误：{}',
+        'chart_export_btn': '导出图表',
+        'export_success': '导出成功', 'export_success_msg': '图表已成功保存至：\n{}',
         'chart_hierarchy_title': '各层级反馈分布',
         'chart_hierarchy_ylabel': '反馈次数', 'chart_hierarchy_xlabel': '语言层级',
         'chart_hierarchy_agree': '同意', 'chart_hierarchy_disagree': '不同意',
@@ -124,6 +157,7 @@ I18N = {
         'sidebar_title': 'データ接続',
         'sidebar_api_label': '🔗 API URL', 'sidebar_api_placeholder': '例：https://kagami.chizunet.cc',
         'sidebar_token_label': '🔐 トークン', 'sidebar_token_placeholder': 'トークンを入力',
+        'sidebar_remember_token': 'トークンを保存',
         'sidebar_fetch_btn': '📂 取得・分析', 'sidebar_status_waiting': '準備完了',
         'tab_hierarchy': '📊 層別受容率分析', 'tab_severity': '🔥 受容率 × 密度',
         'tab_models': '🤖 モデル間比較',
@@ -138,6 +172,9 @@ I18N = {
         'error_processing': '処理エラー', 'error_processing_msg': '失敗：{}',
         'error_table_fill': 'テーブル', 'error_table_fill_msg': '入力失敗：{}',
         'error_export_empty': '出力不可', 'error_export_empty_msg': 'データなし。',
+        'error_unexpected': 'エラー', 'error_unexpected_msg': '予期せぬエラー：{}',
+        'chart_export_btn': '画像出力',
+        'export_success': '出力成功', 'export_success_msg': '画像を保存しました：\n{}',
         'chart_hierarchy_title': 'フィード分布',
         'chart_hierarchy_ylabel': 'フィード数', 'chart_hierarchy_xlabel': '言語層',
         'chart_hierarchy_agree': '納得', 'chart_hierarchy_disagree': 'そう思わない',
@@ -214,8 +251,11 @@ class KagamiAnalyzerWindow(QMainWindow):
         self.current_lang = self.settings.value('language', initial_lang, type=str)
         self.setWindowTitle(get_i18n(self.current_lang, 'app_title'))
         self.resize(1500, 920)
+        self.df_eval = pd.DataFrame()
+        self.df_issue = pd.DataFrame()
         lang_signal.changed.connect(self.on_language_changed)
         self.setup_ui()
+        self.load_persistent_settings()
 
     def setup_ui(self):
         self.setup_stylesheet()
@@ -232,11 +272,11 @@ class KagamiAnalyzerWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.create_tabs()
         main_layout.addWidget(self.tabs, 1)
-        self.df_eval = pd.DataFrame()
-        self.df_issue = pd.DataFrame()
+        
+        # Connect signals after widgets are recreated
         self.url_input.editingFinished.connect(self.save_persistent_settings)
         self.token_input.editingFinished.connect(self.save_persistent_settings)
-        self.load_persistent_settings()
+        self.remember_token_cb.stateChanged.connect(self.save_persistent_settings)
 
     def setup_stylesheet(self):
         self.setStyleSheet("""
@@ -287,37 +327,53 @@ class KagamiAnalyzerWindow(QMainWindow):
         layout = QVBoxLayout(self.sidebar)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
+        
         title = QLabel(get_i18n(self.current_lang, 'sidebar_title'))
         title.setFont(QFont('Segoe UI', 16, QFont.Weight.Bold))
         title.setStyleSheet("color: #0969da; margin-bottom: 6px;")
         layout.addWidget(title)
+        
         subtitle = QLabel(get_i18n(self.current_lang, 'app_subtitle'))
         subtitle.setStyleSheet("color: #57606a; font-size: 12px; line-height: 1.6;")
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
         layout.addSpacing(12)
+        
         api_label = QLabel(get_i18n(self.current_lang, 'sidebar_api_label'))
         api_label.setStyleSheet("font-weight: 500; color: #2c3e50;")
         layout.addWidget(api_label)
+        
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText(get_i18n(self.current_lang, 'sidebar_api_placeholder'))
         self.url_input.setMinimumHeight(38)
         layout.addWidget(self.url_input)
+        
+        token_layout = QHBoxLayout()
         token_label = QLabel(get_i18n(self.current_lang, 'sidebar_token_label'))
         token_label.setStyleSheet("font-weight: 500; color: #2c3e50; margin-top: 4px;")
-        layout.addWidget(token_label)
+        token_layout.addWidget(token_label)
+        
+        token_layout.addStretch()
+        
+        self.remember_token_cb = QCheckBox(get_i18n(self.current_lang, 'sidebar_remember_token'))
+        self.remember_token_cb.setStyleSheet("color: #57606a; font-size: 12px; margin-top: 4px;")
+        token_layout.addWidget(self.remember_token_cb)
+        layout.addLayout(token_layout)
+        
         self.token_input = QLineEdit()
         self.token_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.token_input.setPlaceholderText(get_i18n(self.current_lang, 'sidebar_token_placeholder'))
         self.token_input.setMinimumHeight(38)
         layout.addWidget(self.token_input)
         layout.addSpacing(14)
+        
         self.fetch_btn = QPushButton(get_i18n(self.current_lang, 'sidebar_fetch_btn'))
         self.fetch_btn.setMinimumHeight(46)
         self.fetch_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.fetch_btn.setFont(QFont('Segoe UI', 13, QFont.Weight.Medium))
         self.fetch_btn.clicked.connect(self.fetch_and_analyze)
         layout.addWidget(self.fetch_btn)
+        
         self.status_label = QLabel(get_i18n(self.current_lang, 'sidebar_status_waiting'))
         self.status_label.setWordWrap(True)
         self.status_label.setStyleSheet("color: #57606a; font-size: 12px; line-height: 1.7; margin-top: 12px;")
@@ -335,13 +391,35 @@ class KagamiAnalyzerWindow(QMainWindow):
         self.tabs.addTab(self.tab_models, get_i18n(self.current_lang, 'tab_models'))
         self.tabs.addTab(self.tab_eval_raw, get_i18n(self.current_lang, 'tab_eval_raw'))
         self.tabs.addTab(self.tab_issue_raw, get_i18n(self.current_lang, 'tab_issue_raw'))
+        
         self.layout_hierarchy = QVBoxLayout(self.tab_hierarchy)
+        self.canvas_layout_hierarchy, _ = self.create_chart_tab(self.layout_hierarchy, lambda: self.export_figure(getattr(self, 'fig_hierarchy', None), 'hierarchy_chart.png'))
+        
         self.layout_severity = QVBoxLayout(self.tab_severity)
+        self.canvas_layout_severity, _ = self.create_chart_tab(self.layout_severity, lambda: self.export_figure(getattr(self, 'fig_severity', None), 'severity_chart.png'))
+        
         self.layout_models = QVBoxLayout(self.tab_models)
+        self.canvas_layout_models, _ = self.create_chart_tab(self.layout_models, lambda: self.export_figure(getattr(self, 'fig_models', None), 'models_chart.png'))
+        
         self.layout_eval_raw = QVBoxLayout(self.tab_eval_raw)
         self.layout_issue_raw = QVBoxLayout(self.tab_issue_raw)
         self.create_raw_table_ui(self.layout_eval_raw, 'eval_', 'evaluations.csv')
         self.create_raw_table_ui(self.layout_issue_raw, 'issue_', 'issue_feedback.csv')
+
+    def create_chart_tab(self, layout, export_slot):
+        toolbar = QHBoxLayout()
+        toolbar.addStretch()
+        export_btn = QPushButton(get_i18n(self.current_lang, 'chart_export_btn'))
+        export_btn.setMinimumHeight(32)
+        export_btn.setMaximumWidth(150)
+        export_btn.clicked.connect(export_slot)
+        toolbar.addWidget(export_btn)
+        toolbar.setContentsMargins(14, 14, 14, 0)
+        layout.addLayout(toolbar)
+        
+        canvas_container = QVBoxLayout()
+        layout.addLayout(canvas_container)
+        return canvas_container, export_btn
 
     def create_raw_table_ui(self, layout, prefix, export_name):
         toolbar = QHBoxLayout()
@@ -388,6 +466,7 @@ class KagamiAnalyzerWindow(QMainWindow):
         self.current_lang = lang
         self.setWindowTitle(get_i18n(lang, 'app_title'))
         self.setup_ui()
+        self.load_persistent_settings()
         if not self.df_eval.empty or not self.df_issue.empty:
             self.populate_tables()
             if not self.df_issue.empty:
@@ -397,17 +476,40 @@ class KagamiAnalyzerWindow(QMainWindow):
                 self.plot_severity()
 
     def show_about(self):
-        QMessageBox.information(self, 'About', 'Kagami Research Data Analyzer v2.1\n\nMulti-language support | Hot refresh | Professional UI\n\nLanguages: English | 中文 | 日本語')
+        QMessageBox.information(self, 'About', 'Kagami Research Data Analyzer v2.2\n\nMulti-language support | Hot refresh | Threaded Loading\n\nLanguages: English | 中文 | 日本語')
 
     def load_persistent_settings(self):
         url = self.settings.value('apiBaseUrl', 'https://kagami.chizunet.cc', type=str)
-        token = self.settings.value('accessToken', '', type=str)
+        remember_val = self.settings.value('rememberToken', False)
+        if isinstance(remember_val, str):
+            remember = remember_val.lower() == 'true'
+        else:
+            remember = bool(remember_val)
+
+        self.url_input.blockSignals(True)
+        self.remember_token_cb.blockSignals(True)
+        self.token_input.blockSignals(True)
+
         self.url_input.setText(url)
-        self.token_input.setText(token)
+        self.remember_token_cb.setChecked(remember)
+        if remember:
+            token = self.settings.value('accessToken', '', type=str)
+            self.token_input.setText(token)
+        else:
+            self.token_input.setText('')
+
+        self.url_input.blockSignals(False)
+        self.remember_token_cb.blockSignals(False)
+        self.token_input.blockSignals(False)
 
     def save_persistent_settings(self):
         self.settings.setValue('apiBaseUrl', self.url_input.text().strip())
-        self.settings.setValue('accessToken', self.token_input.text().strip())
+        remember = self.remember_token_cb.isChecked()
+        self.settings.setValue('rememberToken', remember)
+        if remember:
+            self.settings.setValue('accessToken', self.token_input.text().strip())
+        else:
+            self.settings.setValue('accessToken', '')
         self.settings.sync()
 
     def filter_dataframe(self, df, keyword):
@@ -429,21 +531,35 @@ class KagamiAnalyzerWindow(QMainWindow):
             filtered.to_csv(path, index=False, encoding='utf-8-sig')
             self.status_label.setText(f"✓ Exported: {path.split(chr(92))[-1]}")
 
+    def export_figure(self, fig, default_name):
+        if fig is None or not fig.axes:
+            QMessageBox.warning(self, get_i18n(self.current_lang, 'error_export_empty'), get_i18n(self.current_lang, 'error_export_empty_msg'))
+            return
+        path, _ = QFileDialog.getSaveFileName(self, get_i18n(self.current_lang, 'chart_export_btn'), default_name, 'PNG Images (*.png);;JPEG Images (*.jpg);;PDF Files (*.pdf)')
+        if path:
+            try:
+                fig.savefig(path, bbox_inches='tight')
+                QMessageBox.information(self, get_i18n(self.current_lang, 'export_success'), get_i18n(self.current_lang, 'export_success_msg', path))
+            except Exception as e:
+                QMessageBox.critical(self, get_i18n(self.current_lang, 'error_unexpected'), get_i18n(self.current_lang, 'error_unexpected_msg', str(e)[:100]))
+
     def fetch_and_analyze(self):
         url = self.url_input.text().strip()
         token = self.token_input.text().strip()
         self.save_persistent_settings()
         endpoint = f'{url}/api/research/export?format=json&dataset=all'
-        if token:
-            endpoint += f'&token={token}'
+            
         self.fetch_btn.setText(get_i18n(self.current_lang, 'fetch_running'))
         self.fetch_btn.setEnabled(False)
         self.status_label.setText(get_i18n(self.current_lang, 'fetch_progress'))
-        QApplication.processEvents()
+        
+        self.fetch_thread = FetchDataThread(endpoint, token)
+        self.fetch_thread.finished_success.connect(self.on_fetch_success)
+        self.fetch_thread.finished_error.connect(self.on_fetch_error)
+        self.fetch_thread.start()
+
+    def on_fetch_success(self, data):
         try:
-            resp = requests.get(endpoint, timeout=20)
-            resp.raise_for_status()
-            data = resp.json()
             self.df_eval = pd.DataFrame(data.get('evaluations', []))
             self.df_issue = pd.DataFrame(data.get('issueFeedback', []))
             self.status_label.setText(get_i18n(self.current_lang, 'fetch_success_status', len(self.df_eval), len(self.df_issue)))
@@ -452,20 +568,22 @@ class KagamiAnalyzerWindow(QMainWindow):
             self.plot_models()
             self.plot_severity()
             QMessageBox.information(self, get_i18n(self.current_lang, 'fetch_success_title'), get_i18n(self.current_lang, 'fetch_success_msg'))
-        except requests.RequestException as e:
-            QMessageBox.critical(self, get_i18n(self.current_lang, 'error_network'), get_i18n(self.current_lang, 'error_network_msg', str(e)[:80]))
-        except requests.exceptions.JSONDecodeError as e:
-            QMessageBox.critical(self, get_i18n(self.current_lang, 'error_json'), get_i18n(self.current_lang, 'error_json_msg', str(e)[:80]))
-        except ValueError as e:
-            QMessageBox.critical(self, get_i18n(self.current_lang, 'error_processing'), get_i18n(self.current_lang, 'error_processing_msg', str(e)[:80]))
         except Exception as e:
-            QMessageBox.critical(self, 'Error', f'Unexpected error: {str(e)[:80]}')
+            self.on_fetch_error('error_processing', str(e))
         finally:
             self.fetch_btn.setText(get_i18n(self.current_lang, 'sidebar_fetch_btn'))
             self.fetch_btn.setEnabled(True)
 
+    def on_fetch_error(self, error_type, error_msg):
+        title = get_i18n(self.current_lang, error_type)
+        msg_key = f'{error_type}_msg'
+        QMessageBox.critical(self, title, get_i18n(self.current_lang, msg_key, error_msg[:100]))
+        self.fetch_btn.setText(get_i18n(self.current_lang, 'sidebar_fetch_btn'))
+        self.fetch_btn.setEnabled(True)
+        self.status_label.setText(get_i18n(self.current_lang, 'sidebar_status_waiting'))
+
     def populate_tables(self):
-        def fill_table(table, df, filter_input, count_label):
+        def fill_table(table, df, filter_input, count_label, dataset_type):
             table.setSortingEnabled(False)
             table.clear()
             filtered = self.filter_dataframe(df, filter_input.text())
@@ -475,6 +593,25 @@ class KagamiAnalyzerWindow(QMainWindow):
                 table.setSortingEnabled(True)
                 count_label.setText('0 / 0')
                 return
+            
+            base_cols = filtered.columns.tolist()
+            if dataset_type == 'eval':
+                desired_order = [
+                    '_kvKey', 'resId', 'sessionId', 'modelId', 'timestamp', 'lang', 'proficiencyLevel',
+                    'inputText', 'inputScene', 'grammarCount', 'registerCount', 'pragmaticsCount',
+                    'severityLevel', 'rating', 'intentMismatch', 'userCorrection', 'feedbackNote',
+                    'nativeVersion', 'summary'
+                ]
+            else:
+                desired_order = [
+                    '_kvKey', 'resId', 'sessionId', 'modelId', 'layer', 'index', 'vote', 'proficiencyLevel',
+                    'issueOriginal', 'issueText', 'issueHash', 'timestamp', 'lang'
+                ]
+            
+            ordered_cols = [c for c in desired_order if c in base_cols]
+            ordered_cols += [c for c in base_cols if c not in ordered_cols]
+            filtered = filtered[ordered_cols]
+
             try:
                 table.setColumnCount(len(filtered.columns))
                 table.setRowCount(len(filtered))
@@ -491,33 +628,51 @@ class KagamiAnalyzerWindow(QMainWindow):
                 table.setSortingEnabled(True)
                 count_label.setText(get_i18n(self.current_lang, 'table_count_format', len(filtered), len(df)))
             except Exception as e:
-                QMessageBox.warning(self, get_i18n(self.current_lang, 'error_table_fill'), get_i18n(self.current_lang, 'error_table_fill_msg', str(e)[:80]))
+                QMessageBox.warning(self, get_i18n(self.current_lang, 'error_table_fill'), get_i18n(self.current_lang, 'error_table_fill_msg', str(e)[:100]))
                 table.setSortingEnabled(True)
-        fill_table(self.eval_table, self.df_eval, self.eval_filter, self.eval_count)
-        fill_table(self.issue_table, self.df_issue, self.issue_filter, self.issue_count)
+
+        fill_table(self.eval_table, self.df_eval, self.eval_filter, self.eval_count, 'eval')
+        fill_table(self.issue_table, self.df_issue, self.issue_filter, self.issue_count, 'issue')
 
     def plot_hierarchy(self):
-        for i in reversed(range(self.layout_hierarchy.count())):
-            widget = self.layout_hierarchy.itemAt(i).widget()
+        for i in reversed(range(self.canvas_layout_hierarchy.count())):
+            widget = self.canvas_layout_hierarchy.itemAt(i).widget()
             if widget:
                 widget.setParent(None)
-        if self.df_issue.empty or 'layer' not in self.df_issue.columns:
+                
+        if self.df_issue.empty or 'layer' not in self.df_issue.columns or 'vote' not in self.df_issue.columns:
             lbl = QLabel(get_i18n(self.current_lang, 'chart_hierarchy_empty'))
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl.setStyleSheet("color: #57606a; font-size: 13px;")
-            self.layout_hierarchy.addWidget(lbl)
+            self.canvas_layout_hierarchy.addWidget(lbl)
+            self.fig_hierarchy = None
             return
+            
         fig = Figure(figsize=(12, 6.8), dpi=100)
+        self.fig_hierarchy = fig
         ax = fig.add_subplot(111)
-        layer_stats = self.df_issue.groupby(['layer', 'vote']).size().unstack(fill_value=0)
+        
+        try:
+            layer_stats = self.df_issue.groupby(['layer', 'vote']).size().unstack(fill_value=0)
+        except Exception:
+            layer_stats = pd.DataFrame()
+            
         for v in ['agree', 'disagree']:
             if v not in layer_stats.columns:
                 layer_stats[v] = 0
-        layer_stats['Total'] = layer_stats['agree'] + layer_stats['disagree']
-        layer_stats['Rate'] = (layer_stats['agree'] / layer_stats['Total'] * 100).round(1)
-        order = ['grammar', 'register', 'pragmatics']
-        layer_stats = layer_stats.reindex([x for x in order if x in layer_stats.index])
-        layer_stats[['agree', 'disagree']].plot(kind='bar', ax=ax, color=['#2da44c', '#cf222e'], width=0.7)
+                
+        if not layer_stats.empty:
+            layer_stats['Total'] = layer_stats['agree'] + layer_stats['disagree']
+            # fillna(0) prevents ValueError if Total is 0
+            layer_stats['Rate'] = (layer_stats['agree'] / layer_stats['Total'] * 100).round(1).fillna(0)
+            order = ['grammar', 'register', 'pragmatics']
+            layer_stats = layer_stats.reindex([x for x in order if x in layer_stats.index])
+            layer_stats[['agree', 'disagree']].plot(kind='bar', ax=ax, color=['#2da44c', '#cf222e'], width=0.7)
+            
+            # Prevent overlap on Y axis
+            max_val = layer_stats[['agree', 'disagree']].max().max()
+            ax.set_ylim(0, max_val * 1.2 if max_val > 0 else 1)
+        
         ax.set_title(get_i18n(self.current_lang, 'chart_hierarchy_title'), fontsize=15, fontweight='bold', pad=16, color='#24292f')
         ax.set_ylabel(get_i18n(self.current_lang, 'chart_hierarchy_ylabel'), fontsize=12, color='#424f5f')
         ax.set_xlabel(get_i18n(self.current_lang, 'chart_hierarchy_xlabel'), fontsize=12, color='#424f5f')
@@ -527,43 +682,62 @@ class KagamiAnalyzerWindow(QMainWindow):
         ax.grid(axis='y', linestyle='--', alpha=0.25, color='#d0d7de')
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        for i, (idx, row) in enumerate(layer_stats.iterrows()):
-            ax.annotate(get_i18n(self.current_lang, 'chart_hierarchy_rate', int(row['Rate'])), (i, max(row['agree'], row['disagree']) * 1.08), ha='center', fontsize=11, fontweight='bold', color='#24292f')
+        
+        if not layer_stats.empty:
+            max_val = layer_stats[['agree', 'disagree']].max().max()
+            for i, (idx, row) in enumerate(layer_stats.iterrows()):
+                y_pos = max(row['agree'], row['disagree'])
+                ax.annotate(get_i18n(self.current_lang, 'chart_hierarchy_rate', int(row['Rate'])), 
+                            (i, y_pos + (max_val * 0.05 if max_val > 0 else 0.1)), 
+                            ha='center', fontsize=11, fontweight='bold', color='#24292f')
+                            
         fig.tight_layout()
         canvas = FigureCanvas(fig)
-        self.layout_hierarchy.addWidget(canvas)
+        self.canvas_layout_hierarchy.addWidget(canvas)
 
     def plot_models(self):
-        for i in reversed(range(self.layout_models.count())):
-            widget = self.layout_models.itemAt(i).widget()
+        for i in reversed(range(self.canvas_layout_models.count())):
+            widget = self.canvas_layout_models.itemAt(i).widget()
             if widget:
                 widget.setParent(None)
-        if self.df_issue.empty or 'modelId' not in self.df_issue.columns:
+                
+        if self.df_issue.empty or 'modelId' not in self.df_issue.columns or 'layer' not in self.df_issue.columns or 'vote' not in self.df_issue.columns:
             lbl = QLabel(get_i18n(self.current_lang, 'chart_hierarchy_empty'))
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl.setStyleSheet("color: #57606a; font-size: 13px;")
-            self.layout_models.addWidget(lbl)
+            self.canvas_layout_models.addWidget(lbl)
+            self.fig_models = None
             return
 
-        # Replace NaN with 'Unknown' if necessary
         model_series = self.df_issue['modelId'].fillna('Unknown')
         fig = Figure(figsize=(12, 6.8), dpi=100)
+        self.fig_models = fig
         ax = fig.add_subplot(111)
 
-        stats = self.df_issue.groupby([model_series, 'layer', 'vote']).size().unstack(fill_value=0)
-        if 'agree' not in stats.columns:
-            stats['agree'] = 0
-        if 'disagree' not in stats.columns:
-            stats['disagree'] = 0
+        try:
+            stats = self.df_issue.groupby([model_series, 'layer', 'vote']).size().unstack(fill_value=0)
+        except Exception:
+            stats = pd.DataFrame()
             
-        stats['Total'] = stats['agree'] + stats['disagree']
-        stats['Rate'] = (stats['agree'] / stats['Total'] * 100).round(1)
-        
-        rates = stats['Rate'].unstack(level='layer')
-        order = ['grammar', 'register', 'pragmatics']
-        rates = rates[[x for x in order if x in rates.columns]]
-        
-        rates.plot(kind='bar', ax=ax, width=0.7)
+        if not stats.empty:
+            if 'agree' not in stats.columns:
+                stats['agree'] = 0
+            if 'disagree' not in stats.columns:
+                stats['disagree'] = 0
+                
+            stats['Total'] = stats['agree'] + stats['disagree']
+            stats['Rate'] = (stats['agree'] / stats['Total'] * 100).round(1).fillna(0)
+            
+            rates = stats['Rate'].unstack(level='layer')
+            order = ['grammar', 'register', 'pragmatics']
+            rates = rates[[x for x in order if x in rates.columns]]
+            
+            rates.plot(kind='bar', ax=ax, width=0.7)
+            
+            max_val = rates.max().max()
+            if not pd.isna(max_val):
+                ax.set_ylim(0, max(100, max_val * 1.2))
+                
         title_text = "Cross-Model Acceptance Rate (%)" if self.current_lang == 'en' else "跨模型接受率比较 (%)" if self.current_lang == 'zh' else "モデル間受容率比較 (%)"
         ax.set_title(title_text, fontsize=15, fontweight='bold', pad=16, color='#24292f')
         ax.set_ylabel("Agreement Rate (%)" if self.current_lang == 'en' else "同意率 (%)", fontsize=12, color='#424f5f')
@@ -576,29 +750,37 @@ class KagamiAnalyzerWindow(QMainWindow):
         ax.spines['right'].set_visible(False)
         fig.tight_layout()
         canvas = FigureCanvas(fig)
-        self.layout_models.addWidget(canvas)
+        self.canvas_layout_models.addWidget(canvas)
 
     def plot_severity(self):
-        for i in reversed(range(self.layout_severity.count())):
-            widget = self.layout_severity.itemAt(i).widget()
+        for i in reversed(range(self.canvas_layout_severity.count())):
+            widget = self.canvas_layout_severity.itemAt(i).widget()
             if widget:
                 widget.setParent(None)
+                
         if self.df_eval.empty:
             lbl = QLabel(get_i18n(self.current_lang, 'chart_severity_empty'))
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl.setStyleSheet("color: #57606a; font-size: 13px;")
-            self.layout_severity.addWidget(lbl)
+            self.canvas_layout_severity.addWidget(lbl)
+            self.fig_severity = None
             return
+            
         sys_col = 'severityLevel' if 'severityLevel' in self.df_eval.columns else 'systemRating' if 'systemRating' in self.df_eval.columns else None
         rating_col = 'rating'
+        
         if not sys_col or rating_col not in self.df_eval.columns:
             lbl = QLabel(get_i18n(self.current_lang, 'chart_severity_incomplete'))
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl.setStyleSheet("color: #57606a; font-size: 13px;")
-            self.layout_severity.addWidget(lbl)
+            self.canvas_layout_severity.addWidget(lbl)
+            self.fig_severity = None
             return
+            
         fig = Figure(figsize=(12, 6.8), dpi=100)
+        self.fig_severity = fig
         ax = fig.add_subplot(111)
+        
         cross_tab = pd.crosstab(self.df_eval[sys_col], self.df_eval[rating_col])
         order_sys = ['accurate', 'partial', 'inaccurate']
         order_usr = ['accurate', 'partial', 'inaccurate']
@@ -611,7 +793,7 @@ class KagamiAnalyzerWindow(QMainWindow):
         ax.tick_params(axis='both', colors='#424f5f', labelsize=11)
         fig.tight_layout()
         canvas = FigureCanvas(fig)
-        self.layout_severity.addWidget(canvas)
+        self.canvas_layout_severity.addWidget(canvas)
 
 if __name__ == '__main__':
     configure_matplotlib_font()

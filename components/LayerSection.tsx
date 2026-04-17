@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { GrammarIssue, IssueVote, PragmaticsIssue, ProficiencyLevel, RegisterIssue, UILanguage } from "@/lib/types";
 import { getI18n } from "@/lib/i18n";
+import { getClientSessionId } from "@/lib/session-id";
 
 interface Props {
   title: string;
@@ -58,6 +59,7 @@ export default function LayerSection({
         vote,
         proficiencyLevel: getStoredProficiencyLevel(),
         modelId,
+        sessionId: getClientSessionId(),
         issueOriginal,
         issueText,
         timestamp: new Date().toISOString(),
@@ -116,7 +118,7 @@ export default function LayerSection({
 
               {layerType === "register" && 'suggestion' in item && (
                  <span className={`text-[17px] font-sans-jp font-bold px-3 py-0.5 rounded-md ${textClass} ${bgClass}`}>
-                   {'alternatives' in item && item.alternatives.length > 0 ? item.alternatives[0].expression : item.suggestion}
+                   {item.suggestion}
                  </span>
               )}
 
@@ -152,31 +154,35 @@ export default function LayerSection({
             )}
 
             {resId && (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="text-caption text-kg-text-4 font-sans-zh mr-1">
-                  {t.result.issueFeedbackPrompt}
-                </span>
+              <div className="mt-4 flex items-center justify-end gap-2 border-t border-kg-sep-2/50 pt-2">
                 <button
                   type="button"
                   onClick={() => submitIssueFeedback(index, "agree", item.original, item.issue)}
-                  className={`px-2.5 py-1 rounded-lg border text-caption font-sans-zh transition-colors cursor-pointer ${
+                  title={t.result.issueAgree}
+                  className={`flex items-center justify-center p-1.5 rounded-md transition-all active:scale-95 ${
                     votes[getVoteKey(index)] === "agree"
-                      ? "bg-kg-success-bg text-kg-success border-kg-success/35"
-                      : "bg-kg-bg text-kg-text-3 border-kg-sep hover:bg-kg-bg-2 hover:text-kg-text"
+                      ? "text-kg-success bg-kg-success/10"
+                      : "text-kg-text-4 hover:text-kg-text-2 hover:bg-kg-bg-2"
                   }`}
                 >
-                  {t.result.issueAgree}
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
                 </button>
                 <button
                   type="button"
                   onClick={() => submitIssueFeedback(index, "disagree", item.original, item.issue)}
-                  className={`px-2.5 py-1 rounded-lg border text-caption font-sans-zh transition-colors cursor-pointer ${
+                  title={t.result.issueDisagree}
+                  className={`flex items-center justify-center p-1.5 rounded-md transition-all active:scale-95 ${
                     votes[getVoteKey(index)] === "disagree"
-                      ? "bg-kg-layer1-bg text-kg-layer1 border-kg-layer1/30"
-                      : "bg-kg-bg text-kg-text-3 border-kg-sep hover:bg-kg-bg-2 hover:text-kg-text"
+                      ? "text-kg-layer1 bg-kg-layer1/10"
+                      : "text-kg-text-4 hover:text-kg-text-2 hover:bg-kg-bg-2"
                   }`}
                 >
-                  {t.result.issueDisagree}
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
                 </button>
               </div>
             )}

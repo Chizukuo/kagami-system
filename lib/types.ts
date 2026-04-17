@@ -2,6 +2,9 @@ export type UILanguage = "zh" | "ja";
 export type IssueLayer = "grammar" | "register" | "pragmatics";
 export type IssueVote = "agree" | "disagree";
 export type ProficiencyLevel = "N5" | "N4" | "N3" | "N2" | "N1" | "N1_PLUS" | "UNKNOWN";
+export type Rating = "accurate" | "partial" | "inaccurate";
+
+export const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
 
 export interface Alternative {
   expression: string; // Japanese
@@ -57,6 +60,7 @@ export interface IssueFeedbackPayload {
   issueOriginal?: string;
   issueText?: string;
   modelId?: string;
+  sessionId?: string;
   timestamp: string;
   lang?: UILanguage;
 }
