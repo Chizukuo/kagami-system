@@ -70,6 +70,10 @@ class DiagnosticRegistry {
     const isRandomGithub = requestedModel?.toLowerCase() === "random-github";
     const isAnyRandom = isRandom || isRandomGemini || isRandomGithub;
 
+    // Track which provider pool models came from so routing doesn't rely on model name substrings.
+    // e.g. "gemma-4-31b-it" in GEMINI_MODELS_WHITELIST should still route to Gemini.
+    let providerHint: "gemini" | "github" | null = null;
+
     let pool: string[] = [];
     if (isRandom) {
       const githubWhitelist = process.env.GITHUB_MODELS_WHITELIST ? process.env.GITHUB_MODELS_WHITELIST.split(",").map(m => m.trim()).filter(m => m.length > 0) : [];
@@ -77,15 +81,22 @@ class DiagnosticRegistry {
       pool = [...githubWhitelist, ...geminiWhitelist];
     } else if (isRandomGemini) {
       pool = process.env.GEMINI_MODELS_WHITELIST ? process.env.GEMINI_MODELS_WHITELIST.split(",").map(m => m.trim()).filter(m => m.length > 0) : [];
+      providerHint = "gemini";
     } else if (isRandomGithub) {
       pool = process.env.GITHUB_MODELS_WHITELIST ? process.env.GITHUB_MODELS_WHITELIST.split(",").map(m => m.trim()).filter(m => m.length > 0) : [];
+      providerHint = "github";
     }
 
     // Limit retries to 3 times or the total available models in the pool, whichever is smaller. At least 1 attempt.
     const maxAttempts = isAnyRandom ? Math.max(1, Math.min(3, pool.length)) : 1;
     let attempts = 0;
     const attemptedModels: string[] = [];
-    let lastError: any;
+    let lastError: unknown;
+
+    // For `random` mode (both providers), build a lookup to determine provider by model name.
+    const geminiPoolSet = isRandom
+      ? new Set((process.env.GEMINI_MODELS_WHITELIST || "").split(",").map(m => m.trim().toLowerCase()).filter(m => m.length > 0))
+      : null;
 
     while (attempts < maxAttempts) {
       attempts++;
@@ -107,12 +118,20 @@ class DiagnosticRegistry {
         attemptedModels.push(resolvedModelId);
       }
 
-      // Determine provider logic
+      // Determine provider: use providerHint if set (random-gemini / random-github),
+      // otherwise use pool membership for `random`, or model name heuristic for explicit models.
       let provider: DiagnosticProvider;
       let providerId: "gemini" | "github" = "gemini";
 
-      // Standard Gemini detection
-      if (!resolvedModelId || resolvedModelId.toLowerCase().includes("gemini")) {
+      let effectiveHint = providerHint;
+      if (!effectiveHint && isRandom && resolvedModelId && geminiPoolSet) {
+        effectiveHint = geminiPoolSet.has(resolvedModelId.toLowerCase()) ? "gemini" : "github";
+      }
+
+      const useGemini = effectiveHint === "gemini"
+        || (!effectiveHint && (!resolvedModelId || resolvedModelId.toLowerCase().includes("gemini") || resolvedModelId.toLowerCase().includes("gemma")));
+
+      if (useGemini) {
         if (resolvedModelId && !this.isGeminiModelAllowed(resolvedModelId)) {
           if (!isAnyRandom) throw new Error(`Gemini model '${resolvedModelId}' is not allowed by current configuration.`);
           lastError = new Error(`Gemini model '${resolvedModelId}' is not allowed by current configuration.`);
@@ -122,12 +141,21 @@ class DiagnosticRegistry {
         providerId = "gemini";
       } else {
         // Anything else is assumed to be a GitHub model (GPT, Llama, Mistral, etc.)
-        if (!this.isGithubModelAllowed(resolvedModelId)) {
+        if (resolvedModelId && !this.isGithubModelAllowed(resolvedModelId)) {
           if (!isAnyRandom) throw new Error(`Model '${resolvedModelId}' is not allowed by current configuration.`);
           lastError = new Error(`Model '${resolvedModelId}' is not allowed by current configuration.`);
           continue;
         }
-        provider = this.getGithubProvider();
+        try {
+          provider = this.getGithubProvider();
+        } catch (err) {
+          // GitHub provider construction fails if GITHUB_TOKEN is not set.
+          // In random mode, skip and try next model. In explicit mode, rethrow.
+          if (!isAnyRandom) throw err;
+          console.warn(`[DiagnosticRegistry] GitHub provider unavailable, skipping model '${resolvedModelId}':`, err);
+          lastError = err;
+          continue;
+        }
         providerId = "github";
       }
 

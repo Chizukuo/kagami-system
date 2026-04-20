@@ -52,12 +52,9 @@ This project investigates a single focused research question:
 
 > **Do L2 learners' acceptance rates of LLM-generated diagnostics differ systematically across Grammar, Register, and Pragmatics layers - and does this gradient align with the predicted Teachability Hierarchy?**
 
-Specifically, Kagami collects two granularities of anonymous learner feedback:
+Specifically, Kagami collects anonymous **per-issue binary feedback** (thumbs-up / thumbs-down) tagged by layer (Grammar / Register / Pragmatics). An optional free-text comment box is available for qualitative feedback.
 
-1. **Macro-level**: A 3-point holistic rating of the overall diagnosis (helpful / partially helpful / not helpful).
-2. **Micro-level**: Per-issue binary votes (agree / disagree) tagged by layer (Grammar / Register / Pragmatics).
-
-The micro-level data enables per-layer acceptance-rate analysis. A declining acceptance rate from Grammar -> Register -> Pragmatics would constitute evidence that learners' metapragmatic awareness lags behind grammatical knowledge, consistent with the Teachability Hierarchy.
+The per-issue data enables per-layer acceptance-rate analysis. A declining acceptance rate from Grammar -> Register -> Pragmatics would constitute evidence that learners' metapragmatic awareness lags behind grammatical knowledge, consistent with the Teachability Hierarchy.
 
 > [!IMPORTANT]
 > **Learner feedback is not ground truth.** Agree/disagree votes reflect diagnostic acceptance (learner cognition), not diagnostic accuracy (linguistic truth). Future work will introduce a native-speaker gold annotation set to enable three-way triangulation: LLM-vs-Gold, Learner-vs-Gold, and Learner-vs-LLM.
@@ -71,7 +68,7 @@ The micro-level data enables per-layer acceptance-rate analysis. A declining acc
 
 ## 📊 Human Evaluation Mechanism
 
-To support ongoing SLA/NLP research, Kagami collects anonymous feedback at two granularities: a holistic 3-point post-diagnosis evaluation and issue-level agree/disagree votes tagged by layer (Grammar/Register/Pragmatics). This layered signal enables per-layer acceptance-rate analysis and helps model learner diagnostic acceptance along the grammar-register-pragmatics continuum as a proxy for metapragmatic awareness, rather than treating learner feedback as ground-truth AI accuracy; future work will add a small native-speaker gold annotation set for three-way triangulation (LLM-vs-Gold, Learner-vs-Gold, Learner-vs-LLM).
+To support ongoing SLA/NLP research, Kagami collects anonymous per-issue feedback via thumbs-up/thumbs-down buttons on each diagnostic issue, tagged by layer (Grammar/Register/Pragmatics). This per-issue signal enables per-layer acceptance-rate analysis and helps model learner diagnostic acceptance along the grammar-register-pragmatics continuum as a proxy for metapragmatic awareness. An optional free-text feedback area allows qualitative input without imposing structured ratings. Learner feedback is treated as a measure of diagnostic acceptance (learner cognition), not diagnostic accuracy (linguistic truth); future work will add a small native-speaker gold annotation set for three-way triangulation (LLM-vs-Gold, Learner-vs-Gold, Learner-vs-LLM).
 
 ## 👨‍💻 About the Developer
 

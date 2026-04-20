@@ -21,7 +21,8 @@ interface EvalPayload {
   summary: string;
   // Human evaluation
   // Legacy key naming: rating stores helpfulness acceptance, not truth-level accuracy.
-  rating: Rating;
+  // Optional since simplified widget no longer collects three-point ratings.
+  rating?: Rating;
   proficiencyLevel?: ProficiencyLevel;
   lang?: "zh" | "ja";
   intentMismatch?: boolean;
@@ -90,11 +91,11 @@ export async function POST(req: NextRequest) {
     const body: EvalPayload = await req.json();
 
     // Validate required fields
-    if (!body.inputText || !body.inputScene || !body.rating) {
+    if (!body.inputText || !body.inputScene) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (!["accurate", "partial", "inaccurate"].includes(body.rating)) {
+    if (body.rating && !["accurate", "partial", "inaccurate"].includes(body.rating)) {
       return NextResponse.json({ error: "Invalid rating" }, { status: 400 });
     }
 

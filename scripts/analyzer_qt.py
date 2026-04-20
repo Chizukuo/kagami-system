@@ -107,7 +107,7 @@ I18N = {
         'export_success': 'Export Success', 'export_success_msg': 'Chart successfully saved to:\n{}',
         'chart_hierarchy_title': 'Feedback Distribution by Layer',
         'chart_hierarchy_ylabel': 'Number of Responses', 'chart_hierarchy_xlabel': 'Language Layer',
-        'chart_hierarchy_agree': 'Agree', 'chart_hierarchy_disagree': 'Disagree',
+        'chart_hierarchy_agree': 'Helpful', 'chart_hierarchy_disagree': 'Disagree',
         'chart_hierarchy_rate': 'Agreement Rate: {}%', 'chart_hierarchy_empty': 'No feedback data',
         'chart_severity_title': 'Acceptance vs. Issue Density',
         'chart_severity_ylabel': 'Issue Density', 'chart_severity_xlabel': 'Helpfulness',
@@ -142,7 +142,7 @@ I18N = {
         'export_success': '导出成功', 'export_success_msg': '图表已成功保存至：\n{}',
         'chart_hierarchy_title': '各层级反馈分布',
         'chart_hierarchy_ylabel': '反馈次数', 'chart_hierarchy_xlabel': '语言层级',
-        'chart_hierarchy_agree': '同意', 'chart_hierarchy_disagree': '不同意',
+        'chart_hierarchy_agree': '有用', 'chart_hierarchy_disagree': '不认同',
         'chart_hierarchy_rate': '同意率：{}%', 'chart_hierarchy_empty': '无反馈数据',
         'chart_severity_title': '接受度 × 问题密度',
         'chart_severity_ylabel': '问题密度', 'chart_severity_xlabel': '有用性',
@@ -177,7 +177,7 @@ I18N = {
         'export_success': '出力成功', 'export_success_msg': '画像を保存しました：\n{}',
         'chart_hierarchy_title': 'フィード分布',
         'chart_hierarchy_ylabel': 'フィード数', 'chart_hierarchy_xlabel': '言語層',
-        'chart_hierarchy_agree': '納得', 'chart_hierarchy_disagree': 'そう思わない',
+        'chart_hierarchy_agree': '参考になった', 'chart_hierarchy_disagree': 'そう思わない',
         'chart_hierarchy_rate': '納得率：{}%', 'chart_hierarchy_empty': 'データなし',
         'chart_severity_title': '受容率 × 密度',
         'chart_severity_ylabel': '密度', 'chart_severity_xlabel': '有用性',
@@ -476,7 +476,7 @@ class KagamiAnalyzerWindow(QMainWindow):
                 self.plot_severity()
 
     def show_about(self):
-        QMessageBox.information(self, 'About', 'Kagami Research Data Analyzer v2.2\n\nMulti-language support | Hot refresh | Threaded Loading\n\nLanguages: English | 中文 | 日本語')
+        QMessageBox.information(self, 'About', 'Kagami Research Data Analyzer v2.3\n\nMulti-language support | Hot refresh | Threaded Loading\n\nLanguages: English | 中文 | 日本語')
 
     def load_persistent_settings(self):
         url = self.settings.value('apiBaseUrl', 'https://kagami.chizunet.cc', type=str)
@@ -770,18 +770,41 @@ class KagamiAnalyzerWindow(QMainWindow):
         rating_col = 'rating'
         
         if not sys_col or rating_col not in self.df_eval.columns:
+            # rating may be absent in newer records from simplified widget
+            # Show chart with available data or fallback
+            if sys_col and sys_col in self.df_eval.columns:
+                # We can still show severity distribution without rating
+                pass
+            else:
+                lbl = QLabel(get_i18n(self.current_lang, 'chart_severity_incomplete'))
+                lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                lbl.setStyleSheet("color: #57606a; font-size: 13px;")
+                self.canvas_layout_severity.addWidget(lbl)
+                self.fig_severity = None
+                return
+            
+        fig = Figure(figsize=(12, 6.8), dpi=100)
+        self.fig_severity = fig
+        ax = fig.add_subplot(111)
+        
+        if rating_col in self.df_eval.columns:
+            # Filter to records that have a rating value
+            df_with_rating = self.df_eval[self.df_eval[rating_col].notna() & (self.df_eval[rating_col] != '')]
+            if df_with_rating.empty:
+                lbl = QLabel(get_i18n(self.current_lang, 'chart_severity_empty'))
+                lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                lbl.setStyleSheet("color: #57606a; font-size: 13px;")
+                self.canvas_layout_severity.addWidget(lbl)
+                self.fig_severity = None
+                return
+            cross_tab = pd.crosstab(df_with_rating[sys_col], df_with_rating[rating_col])
+        else:
             lbl = QLabel(get_i18n(self.current_lang, 'chart_severity_incomplete'))
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             lbl.setStyleSheet("color: #57606a; font-size: 13px;")
             self.canvas_layout_severity.addWidget(lbl)
             self.fig_severity = None
             return
-            
-        fig = Figure(figsize=(12, 6.8), dpi=100)
-        self.fig_severity = fig
-        ax = fig.add_subplot(111)
-        
-        cross_tab = pd.crosstab(self.df_eval[sys_col], self.df_eval[rating_col])
         order_sys = ['accurate', 'partial', 'inaccurate']
         order_usr = ['accurate', 'partial', 'inaccurate']
         cross_tab = cross_tab.reindex(index=[x for x in order_sys if x in cross_tab.index], columns=[x for x in order_usr if x in cross_tab.columns])
