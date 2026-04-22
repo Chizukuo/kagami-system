@@ -60,7 +60,6 @@ export class GeminiTTSProvider extends BaseTTSProvider {
       model: modelId,
       contents: [{ role: "user", parts: [{ text: `${styleInstruction}\n\nText: ${req.text}` }] }],
       config: {
-        // @ts-expect-error - types in SDK might be behind
         responseModalities: ["audio"],
         speechConfig: {
           voiceConfig: {
@@ -69,13 +68,11 @@ export class GeminiTTSProvider extends BaseTTSProvider {
             }
           }
         }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any
+      }
     });
 
     const candidate = result.candidates?.[0];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parts = candidate?.content?.parts as any[];
+    const parts = candidate?.content?.parts;
     const audioPart = parts?.find((p) => p.inlineData?.mimeType?.startsWith("audio/"));
 
     if (!audioPart || !audioPart.inlineData?.data) {
@@ -83,7 +80,7 @@ export class GeminiTTSProvider extends BaseTTSProvider {
     }
 
     const rawBuffer = Buffer.from(audioPart.inlineData.data, 'base64');
-    const mimeType = audioPart.inlineData.mimeType;
+    const mimeType = audioPart.inlineData?.mimeType || "";
 
     // If Gemini returns raw PCM (L16), wrap it in WAV
     if (mimeType.includes("l16")) {
