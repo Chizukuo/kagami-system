@@ -5,6 +5,7 @@ export type ProficiencyLevel = "N5" | "N4" | "N3" | "N2" | "N1" | "N1_PLUS" | "U
 export type Rating = "accurate" | "partial" | "inaccurate";
 
 export const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
+export const PROFICIENCY_STORAGE_KEY = "kagami.proficiencyLevel";
 
 export interface Alternative {
   expression: string; // Japanese
@@ -30,12 +31,18 @@ export interface PragmaticsIssue {
   alternatives: Alternative[];
 }
 
+export interface NativeVersion {
+  label: string;
+  sentences: string[];
+}
+
 export interface DiagnosisResult {
   grammar: GrammarIssue[];
   register: RegisterIssue[];
   pragmatics: PragmaticsIssue[];
-  native_version: string[]; // Japanese sentences
-  summary: string;        // UI language (Chinese or Japanese)
+  native_versions: NativeVersion[];
+  native_version: string[]; // Legacy
+  summary: string;
   // Client-side only -- not from API
   _inputText?: string;
   _inputScene?: string;

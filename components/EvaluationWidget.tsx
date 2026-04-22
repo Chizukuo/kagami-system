@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ProficiencyLevel, UILanguage, VALID_PROFICIENCY_LEVELS } from "@/lib/types";
+import { ProficiencyLevel, UILanguage, VALID_PROFICIENCY_LEVELS, PROFICIENCY_STORAGE_KEY } from "@/lib/types";
 import { getI18n } from "@/lib/i18n";
 import { getClientSessionId } from "@/lib/session-id";
 
@@ -30,7 +30,7 @@ interface Props {
 
 const getStoredProficiencyLevel = (): ProficiencyLevel | "" => {
   if (typeof window === "undefined") return "";
-  const stored = window.localStorage.getItem("kagami.proficiencyLevel");
+  const stored = window.localStorage.getItem(PROFICIENCY_STORAGE_KEY);
   if (stored && VALID_PROFICIENCY_LEVELS.includes(stored as ProficiencyLevel)) {
     return stored as ProficiencyLevel;
   }
@@ -61,8 +61,8 @@ export default function EvaluationWidget({
     const next = VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : "";
     setProficiencyLevel(next);
     if (typeof window !== "undefined") {
-      if (next) window.localStorage.setItem("kagami.proficiencyLevel", next);
-      else window.localStorage.removeItem("kagami.proficiencyLevel");
+      if (next) window.localStorage.setItem(PROFICIENCY_STORAGE_KEY, next);
+      else window.localStorage.removeItem(PROFICIENCY_STORAGE_KEY);
     }
   };
 

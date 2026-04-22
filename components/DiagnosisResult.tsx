@@ -45,7 +45,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
       </div>
 
       {/* Native Output elevated to the top! */}
-      <NativeVersion nativeVersion={result.native_version} lang={lang} />
+      <NativeVersion nativeVersions={result.native_versions} lang={lang} scene={result._inputScene} />
 
       {/* Details Section - Full prominence */}
       <div className="mt-8 flex flex-col gap-6">
@@ -63,6 +63,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
           resId={result._resId}
           modelId={result._modelId}
           lang={lang}
+          scene={result._inputScene}
         />
 
         <LayerSection
@@ -74,6 +75,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
           resId={result._resId}
           modelId={result._modelId}
           lang={lang}
+          scene={result._inputScene}
         />
 
         <LayerSection
@@ -85,6 +87,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
           resId={result._resId}
           modelId={result._modelId}
           lang={lang}
+          scene={result._inputScene}
         />
       </div>
 
