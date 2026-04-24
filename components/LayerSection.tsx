@@ -28,7 +28,6 @@ export default function LayerSection({
 }: Props) {
   const t = getI18n(lang);
   const [votes, setVotes] = useState<Record<string, IssueVote | undefined>>({});
-  const [activeAltIndices, setActiveAltIndices] = useState<Record<number, number>>({});
 
   const getVoteKey = (index: number) => `${resId ?? "__nores__"}:${index}`;
 
@@ -75,13 +74,10 @@ export default function LayerSection({
       <div className="flex flex-col border-t border-kg-sep-2">
         {items.map((item, index) => {
           const alternatives = 'alternatives' in item ? item.alternatives : [];
-          const activeAltIndex = activeAltIndices[index] || 0;
-          const currentAlt = alternatives[activeAltIndex];
-
           let primaryCorrection = "";
           if (layerType === "grammar" && 'correction' in item) primaryCorrection = item.correction;
           else if (layerType === "register" && 'suggestion' in item) primaryCorrection = item.suggestion;
-          else if (layerType === "pragmatics" && currentAlt) primaryCorrection = currentAlt.expression;
+          else if (layerType === "pragmatics" && alternatives.length > 0) primaryCorrection = alternatives[0].expression;
 
           return (
             <div key={index} className="py-5 border-b border-kg-sep-2 last:border-b-0 flex flex-col gap-3">
@@ -89,13 +85,14 @@ export default function LayerSection({
                 <span className={`text-[17px] font-sans-jp px-2 py-0.5 rounded-md line-through text-kg-text-3 font-bold bg-kg-bg-2 decoration-2 ${strokeColor}`}>
                   {item.original}
                 </span>
-                <span className="text-kg-text-4 font-mono">鈫</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-[17px] font-sans-jp font-bold px-3 py-0.5 rounded-md ${textClass} ${bgClass}`}>
-                    {primaryCorrection}
-                  </span>
-                  <AudioPlayer text={primaryCorrection} scene={scene} className="w-7 h-7 scale-90" />
-                </div>
+                {primaryCorrection && (
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[17px] font-sans-jp font-bold px-3 py-0.5 rounded-md ${textClass} ${bgClass}`}>
+                      {primaryCorrection}
+                    </span>
+                    <AudioPlayer text={primaryCorrection} scene={scene} className="w-7 h-7 scale-90" />
+                  </div>
+                )}
               </div>
 
               <p className="text-subhead font-sans-zh text-kg-text-2 leading-[1.8] mt-1 tracking-wide">
@@ -104,43 +101,57 @@ export default function LayerSection({
               </p>
 
               {layerType !== "grammar" && alternatives.length > 0 && (
-                <div className="mt-2 pl-4 border-l-[3px] border-kg-sep-2 flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    {alternatives.map((alt, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setActiveAltIndices(prev => ({...prev, [index]: i}))}
-                        className={`px-3 py-1 rounded-full text-[10px] font-mono font-bold transition-all ${
-                          i === activeAltIndex
-                            ? `bg-kg-bg-2 ${textClass} shadow-sm border border-kg-sep-2`
-                            : "text-kg-text-4 hover:bg-kg-bg-2"
-                        }`}
-                      >
-                        {alt.expression}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="p-3 bg-kg-bg-2/30 rounded-lg animate-fade-in" key={`${index}-${activeAltIndex}`}>
-                    <p className="text-footnote text-kg-text-3 font-sans-zh italic leading-relaxed">
-                      {currentAlt.context}
-                    </p>
-                  </div>
+                <div className="mt-2 pl-4 border-l-[3px] border-kg-sep-2 flex flex-col gap-2">
+                  <span className="text-[10px] font-mono text-kg-text-4 uppercase tracking-widest font-bold">{t.result.alternativesLabel}</span>
+                  {alternatives.map((alt, i) => (
+                    <div key={i} className="flex flex-col sm:flex-row sm:items-baseline sm:gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-subhead font-medium font-sans-jp ${textClass}`}>
+                          {alt.expression}
+                        </span>
+                        <AudioPlayer text={alt.expression} scene={scene} className="w-5 h-5 scale-75" />
+                      </div>
+                      <span className="text-footnote text-kg-text-3 font-sans-zh">
+                        {alt.context}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
 
               {resId && (
                 <div className="mt-4 flex items-center justify-end gap-2 border-t border-kg-sep-2/50 pt-2">
                   <button
+                    type="button"
                     onClick={() => submitIssueFeedback(index, "agree", item.original, item.issue)}
-                    className={`text-caption font-sans-zh ${votes[getVoteKey(index)] === "agree" ? "text-kg-success font-bold" : "text-kg-text-4"}`}
+                    title={t.result.issueAgree}
+                    className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-md transition-all active:scale-95 text-caption font-sans-zh ${
+                      votes[getVoteKey(index)] === "agree"
+                        ? "text-kg-success bg-kg-success/10 font-medium"
+                        : "text-kg-text-4 hover:text-kg-text-2 hover:bg-kg-bg-2"
+                    }`}
                   >
-                    {t.result.issueAgree}
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"></path>
+                      <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                    </svg>
+                    <span>{t.result.issueAgree}</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => submitIssueFeedback(index, "disagree", item.original, item.issue)}
-                    className={`text-caption font-sans-zh ${votes[getVoteKey(index)] === "disagree" ? "text-kg-layer1 font-bold" : "text-kg-text-4"}`}
+                    title={t.result.issueDisagree}
+                    className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-md transition-all active:scale-95 text-caption font-sans-zh ${
+                      votes[getVoteKey(index)] === "disagree"
+                        ? "text-kg-layer1 bg-kg-layer1/10 font-medium"
+                        : "text-kg-text-4 hover:text-kg-text-2 hover:bg-kg-bg-2"
+                    }`}
                   >
-                    {t.result.issueDisagree}
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"></path>
+                      <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+                    </svg>
+                    <span>{t.result.issueDisagree}</span>
                   </button>
                 </div>
               )}
