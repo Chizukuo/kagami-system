@@ -1,10 +1,10 @@
 export type UILanguage = "zh" | "ja";
 export type IssueLayer = "grammar" | "register" | "pragmatics";
 export type IssueVote = "agree" | "disagree";
-export type ProficiencyLevel = "N5" | "N4" | "N3" | "N2" | "N1" | "N1_PLUS" | "UNKNOWN";
+export type ProficiencyLevel = "N5" | "N4" | "N3" | "N2" | "N1" | "N1_PLUS" | "NATIVE" | "UNKNOWN";
 export type Rating = "accurate" | "partial" | "inaccurate";
 
-export const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
+export const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "NATIVE", "UNKNOWN"];
 export const PROFICIENCY_STORAGE_KEY = "kagami.proficiencyLevel";
 
 export interface Alternative {
@@ -66,6 +66,7 @@ export interface IssueFeedbackPayload {
   issueHash?: string;
   issueOriginal?: string;
   issueText?: string;
+  issueTextLength?: number;
   modelId?: string;
   sessionId?: string;
   timestamp: string;

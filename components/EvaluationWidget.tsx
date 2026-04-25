@@ -153,6 +153,7 @@ export default function EvaluationWidget({
                 <option value="N2">N2</option>
                 <option value="N1">N1</option>
                 <option value="N1_PLUS">{t.evaluation.proficiencyN1Plus}</option>
+                <option value="NATIVE">{t.evaluation.proficiencyNative}</option>
                 <option value="UNKNOWN">{t.evaluation.proficiencyUnknown}</option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-kg-text-4 group-hover:text-kg-text-3">

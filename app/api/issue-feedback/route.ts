@@ -8,7 +8,7 @@ interface KvBinding {
 
 const VALID_LAYERS: IssueLayer[] = ["grammar", "register", "pragmatics"];
 const VALID_VOTES: IssueVote[] = ["agree", "disagree"];
-const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "UNKNOWN"];
+const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "NATIVE", "UNKNOWN"];
 const MAX_ISSUE_INDEX = 50;
 const MAX_RES_ID_LENGTH = 128;
 const MAX_ISSUE_ORIGINAL_LENGTH = 500;
@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
       issueHash,
       issueOriginal,
       issueText,
+      issueTextLength: issueText.length,
       modelId: body.modelId,
       sessionId: body.sessionId,
       timestamp: new Date().toISOString(),
