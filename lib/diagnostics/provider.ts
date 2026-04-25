@@ -24,14 +24,33 @@ export abstract class BaseProvider implements DiagnosticProvider {
   }
 
   // Type definition for raw diagnosis missing array parsing
-  protected normalizeDiagnosisResult(raw: Omit<DiagnosisResult, "native_version"> & { native_version: string[] | string }): DiagnosisResult {
-    const nativeVersion = Array.isArray(raw.native_version)
-      ? raw.native_version.map((line) => String(line).trim()).filter((line) => line.length > 0)
-      : this.splitNativeVersion(String(raw.native_version ?? ""));
+  protected normalizeDiagnosisResult(raw: Record<string, unknown>): DiagnosisResult {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let nativeVersions = (raw.native_versions as any[]) || [];
+    
+    // Ensure native_versions is correctly formatted
+    if (!Array.isArray(nativeVersions)) {
+      nativeVersions = [];
+    }
+
+    // Fallback: if native_versions is empty but native_version exists
+    if (nativeVersions.length === 0 && raw.native_version) {
+      const sentences = Array.isArray(raw.native_version)
+        ? raw.native_version.map((s: unknown) => String(s).trim())
+        : this.splitNativeVersion(String(raw.native_version));
+      
+      nativeVersions = [{
+        label: "Native",
+        sentences: sentences
+      }];
+    }
+
+    const firstSentences = nativeVersions[0]?.sentences || [];
 
     return {
       ...raw,
-      native_version: nativeVersion,
-    };
+      native_versions: nativeVersions,
+      native_version: firstSentences,
+    } as unknown as DiagnosisResult;
   }
 }
