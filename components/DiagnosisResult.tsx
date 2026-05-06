@@ -62,6 +62,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
           emptyMessage={t.result.grammarEmpty}
           resId={result._resId}
           modelId={result._modelId}
+          sig={result._sig}
           lang={lang}
           scene={result._inputScene}
         />
@@ -74,6 +75,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
           emptyMessage={t.result.registerEmpty}
           resId={result._resId}
           modelId={result._modelId}
+          sig={result._sig}
           lang={lang}
           scene={result._inputScene}
         />
@@ -86,6 +88,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
           emptyMessage={t.result.pragmaticsEmpty}
           resId={result._resId}
           modelId={result._modelId}
+          sig={result._sig}
           lang={lang}
           scene={result._inputScene}
         />
@@ -96,6 +99,7 @@ export default function DiagnosisResult({ result, lang }: Props) {
         <EvaluationWidget
           resId={result._resId ?? ""}
           modelId={result._modelId ?? ""}
+          sig={result._sig}
           inputText={result._inputText ?? ""}
           inputScene={result._inputScene ?? ""}
           grammarCount={result.grammar.length}

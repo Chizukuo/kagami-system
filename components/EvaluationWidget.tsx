@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { ProficiencyLevel, UILanguage, VALID_PROFICIENCY_LEVELS, PROFICIENCY_STORAGE_KEY } from "@/lib/types";
+import { ProficiencyLevel, UILanguage, VALID_PROFICIENCY_LEVELS, PROFICIENCY_STORAGE_KEY, getStoredProficiencyLevel } from "@/lib/types";
 import { getI18n } from "@/lib/i18n";
 import { getClientSessionId } from "@/lib/session-id";
 
@@ -18,6 +20,7 @@ const IconChevronDown = ({ className = "w-4 h-4", strokeWidth = "2" }: { classNa
 interface Props {
   resId: string;
   modelId: string;
+  sig?: string;
   inputText: string;
   inputScene: string;
   grammarCount: number;
@@ -28,18 +31,10 @@ interface Props {
   lang: UILanguage;
 }
 
-const getStoredProficiencyLevel = (): ProficiencyLevel | "" => {
-  if (typeof window === "undefined") return "";
-  const stored = window.localStorage.getItem(PROFICIENCY_STORAGE_KEY);
-  if (stored && VALID_PROFICIENCY_LEVELS.includes(stored as ProficiencyLevel)) {
-    return stored as ProficiencyLevel;
-  }
-  return "";
-};
-
 export default function EvaluationWidget({
   resId,
   modelId,
+  sig,
   inputText,
   inputScene,
   grammarCount,
@@ -54,7 +49,7 @@ export default function EvaluationWidget({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<{ message: string } | null>(null);
   const [feedbackNote, setFeedbackNote] = useState("");
-  const [proficiencyLevel, setProficiencyLevel] = useState<ProficiencyLevel | "">(getStoredProficiencyLevel);
+  const [proficiencyLevel, setProficiencyLevel] = useState<ProficiencyLevel | "">(getStoredProficiencyLevel() ?? "");
 
   const handleProficiencyChange = (value: string) => {
     const normalized = value.toUpperCase() as ProficiencyLevel;
@@ -78,6 +73,7 @@ export default function EvaluationWidget({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           resId,
+          _sig: sig,
           modelId,
           sessionId: getClientSessionId(),
           inputText,
@@ -117,8 +113,8 @@ export default function EvaluationWidget({
     );
   }
 
-  // Check if proficiency level has already been set (from localStorage)
-  const showProficiency = !getStoredProficiencyLevel();
+  // Always show proficiency selector to allow users to change it
+  const showProficiency = true;
 
   return (
     <div className="border-t border-kg-sep-2 pt-8 pb-6 animate-fade-in-up">
@@ -138,13 +134,14 @@ export default function EvaluationWidget({
         {/* Proficiency selector — only shown if not already stored */}
         {showProficiency && (
           <div className="flex flex-col gap-2">
-            <label className="text-footnote font-sans-zh text-kg-text-3 font-medium uppercase tracking-wider">{t.evaluation.proficiencyLabel}</label>
+            <label htmlFor="eval-proficiency" className="text-footnote font-sans-zh text-kg-text-3 font-medium uppercase tracking-wider">{t.evaluation.proficiencyLabel}</label>
             <div className="relative group">
               <select
+                id="eval-proficiency"
                 value={proficiencyLevel}
                 onChange={(e) => handleProficiencyChange(e.target.value)}
                 disabled={submitting}
-                className="appearance-none w-full h-11 pl-4 pr-10 bg-kg-bg border border-kg-sep rounded-xl text-footnote text-kg-text outline-none focus:border-kg-blue focus:ring-4 focus:ring-kg-blue/10 hover:border-kg-sep-2 shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-60"
+                className="appearance-none w-full h-11 pl-4 pr-10 bg-kg-bg border border-kg-sep rounded-xl text-callout text-kg-text outline-none focus:border-kg-blue focus:ring-4 focus:ring-kg-blue/10 hover:border-kg-sep-2 shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-60"
               >
                 <option value="">{t.evaluation.proficiencyPlaceholder}</option>
                 <option value="N5">N5</option>
@@ -166,19 +163,20 @@ export default function EvaluationWidget({
 
         {/* Optional feedback textarea */}
         <div className="flex flex-col gap-2">
-          <label className="text-footnote font-sans-zh text-kg-text-3 font-medium uppercase tracking-wider">{t.evaluation.feedbackLabel}</label>
+          <label htmlFor="eval-feedback" className="text-footnote font-sans-zh text-kg-text-3 font-medium uppercase tracking-wider">{t.evaluation.feedbackLabel}</label>
           <textarea
+            id="eval-feedback"
             value={feedbackNote}
             onChange={(e) => setFeedbackNote(e.target.value)}
             maxLength={500}
             disabled={submitting}
             placeholder={t.evaluation.feedbackPlaceholder}
-            className="w-full min-h-[80px] p-3.5 bg-kg-bg border border-kg-sep rounded-xl text-[14px] text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:ring-4 focus:ring-kg-blue/10 hover:border-kg-sep-2 transition-all duration-200 ease-apple disabled:opacity-60 shadow-sm focus:shadow-md font-sans-zh"
+            className="w-full min-h-[80px] p-3.5 bg-kg-bg border border-kg-sep rounded-xl text-callout text-kg-text placeholder-kg-text-4 resize-y outline-none focus:border-kg-blue focus:ring-4 focus:ring-kg-blue/10 hover:border-kg-sep-2 transition-all duration-200 ease-apple disabled:opacity-60 shadow-sm focus:shadow-md font-sans-zh"
           />
         </div>
 
         {/* Submit + consent */}
-        <div className={`flex flex-col gap-3 transition-all duration-300 ${canSubmit ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+        <div className="flex flex-col gap-3 transition-all duration-300">
           <button
             onClick={submitFeedback}
             disabled={submitting || !canSubmit}

@@ -1,4 +1,4 @@
-import { DiagnosisResult, UILanguage } from "../types";
+import { DiagnosisResult, GrammarIssue, PragmaticsIssue, RegisterIssue, UILanguage } from "../types";
 
 export interface DiagnosticProvider {
   /**
@@ -25,6 +25,14 @@ export abstract class BaseProvider implements DiagnosticProvider {
 
   // Type definition for raw diagnosis missing array parsing
   protected normalizeDiagnosisResult(raw: Record<string, unknown>): DiagnosisResult {
+    if (!raw || typeof raw !== "object") {
+      throw new Error("Invalid diagnosis result structure returned by model");
+    }
+
+    if (!Array.isArray(raw.grammar) || !Array.isArray(raw.register) || !Array.isArray(raw.pragmatics)) {
+      throw new Error("Model failed to generate required layer arrays (grammar, register, pragmatics)");
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let nativeVersions = (raw.native_versions as any[]) || [];
     
@@ -48,7 +56,10 @@ export abstract class BaseProvider implements DiagnosticProvider {
     const firstSentences = nativeVersions[0]?.sentences || [];
 
     return {
-      ...raw,
+      grammar: raw.grammar as GrammarIssue[],
+      register: raw.register as RegisterIssue[],
+      pragmatics: raw.pragmatics as PragmaticsIssue[],
+      summary: String(raw.summary || ""),
       native_versions: nativeVersions,
       native_version: firstSentences,
     } as unknown as DiagnosisResult;

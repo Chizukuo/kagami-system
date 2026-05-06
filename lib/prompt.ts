@@ -116,8 +116,8 @@ Alternatives must be meaning-preserving. Avoid near-duplicate rewrites.
 
 ADDITIONAL RULES:
 - If a layer has no issues, return an empty array []
-- native_version must be a sentence array preserving natural sentence
-  boundaries
+- native_versions must be an array of objects containing a "label" (e.g., "Native", "Casual", "Formal") and a "sentences" array preserving natural sentence boundaries.
+- The first item in native_versions should have the label "Native".
 `.trim();
 }
 
@@ -181,11 +181,18 @@ export const RESPONSE_SCHEMA = {
         required: ['original', 'issue', 'alternatives'],
       },
     },
-    native_version: {
+    native_versions: {
       type: 'ARRAY',
-      items: { type: 'STRING' },
+      items: {
+        type: 'OBJECT',
+        properties: {
+          label: { type: 'STRING' },
+          sentences: { type: 'ARRAY', items: { type: 'STRING' } },
+        },
+        required: ['label', 'sentences'],
+      },
     },
     summary:        { type: 'STRING' },
   },
-  required: ['grammar', 'register', 'pragmatics', 'native_version', 'summary'],
+  required: ['grammar', 'register', 'pragmatics', 'native_versions', 'summary'],
 };

@@ -139,6 +139,7 @@ export default function ClientPage() {
             <button
               type="button"
               onClick={() => setLang("zh")}
+              aria-pressed={lang === "zh"}
               className={`px-2.5 py-1 text-caption font-sans-zh transition-all ${lang === "zh" ? "bg-kg-blue text-white shadow-md" : "text-kg-text-2 hover:bg-kg-bg active:bg-kg-bg-3"}`}
             >
               中文
@@ -147,6 +148,7 @@ export default function ClientPage() {
             <button
               type="button"
               onClick={() => setLang("ja")}
+              aria-pressed={lang === "ja"}
               className={`px-2.5 py-1 text-caption font-sans-jp transition-all ${lang === "ja" ? "bg-kg-blue text-white shadow-md" : "text-kg-text-2 hover:bg-kg-bg active:bg-kg-bg-3"}`}
             >
               日本語

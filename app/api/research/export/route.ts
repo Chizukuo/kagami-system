@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-
-interface KvListKey {
-  name: string;
-}
-
-interface KvListResult {
-  keys: KvListKey[];
-  list_complete: boolean;
-  cursor?: string;
-}
-
-interface KvBinding {
-  list(options?: { prefix?: string; cursor?: string; limit?: number }): Promise<KvListResult>;
-  get(key: string): Promise<string | null>;
-}
+import { KvBinding } from "@/lib/api-utils";
 
 type Dataset = "all" | "evaluations" | "issue-feedback";
 type ExportFormat = "json" | "csv";
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const encoder = new TextEncoder();
+  const aBytes = encoder.encode(a);
+  const bBytes = encoder.encode(b);
+  let result = 0;
+  for (let i = 0; i < aBytes.length; i++) {
+    result |= aBytes[i] ^ bBytes[i];
+  }
+  return result === 0;
+}
 
 function normalizeDataset(value: string | null): Dataset {
   if (value === "evaluations" || value === "issue-feedback" || value === "all") {
@@ -99,7 +97,7 @@ export async function GET(req: NextRequest) {
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
-    if (token !== requiredToken) {
+    if (!timingSafeEqual(token, requiredToken)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { ProficiencyLevel, Rating, VALID_PROFICIENCY_LEVELS } from "@/lib/types";
-
-interface KvBinding {
-  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
-}
-
-const MAX_RES_ID_LENGTH = 128;
+import { ProficiencyLevel, Rating } from "@/lib/types";
+import { KvBinding, sanitizeResId, normalizeProficiencyLevel, verifyResIdSignature } from "@/lib/api-utils";
 
 interface EvalPayload {
   resId?: string;
+  _sig?: string;
   // Input
   inputText: string;
   inputScene: string;
@@ -71,27 +67,15 @@ function isValidCount(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) >= 0;
 }
 
-function sanitizeResId(resId?: string): string {
-  return (resId ?? "")
-    .trim()
-    .slice(0, MAX_RES_ID_LENGTH)
-    .replace(/[^A-Za-z0-9_-]/g, "");
-}
-
-function normalizeProficiencyLevel(value: unknown): ProficiencyLevel | undefined {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-  const normalized = value.toUpperCase() as ProficiencyLevel;
-  return VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : undefined;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body: EvalPayload = await req.json();
 
+    const inputText = (body.inputText || "").trim().slice(0, 2000);
+    const inputScene = (body.inputScene || "").trim().slice(0, 500);
+
     // Validate required fields
-    if (!body.inputText || !body.inputScene) {
+    if (!inputText || !inputScene) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -110,15 +94,23 @@ export async function POST(req: NextRequest) {
       ? crypto.randomUUID()
       : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
     const resId = sanitizeResId(body.resId) || generatedId;
+
+    if (!(await verifyResIdSignature(resId, body._sig ?? ""))) {
+      return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
+    }
+
     const key = `eval_${resId}`;
     const nativeVersionLines = normalizeNativeVersion(body.nativeVersion);
     const severityLevel = deriveSeverityLevel(body.grammarCount, body.registerCount, body.pragmaticsCount);
 
     const record = {
       ...body,
+      inputText,
+      inputScene,
+      summary: (body.summary || "").trim().slice(0, 2000),
       resId,
-      modelId: body.modelId || "unknown",
-      sessionId: body.sessionId || "unknown",
+      modelId: (body.modelId || "unknown").slice(0, 100),
+      sessionId: (body.sessionId || "unknown").slice(0, 100),
       // severityLevel: LLM's assessment of input quality (issue count-based).
       // This is NOT comparable to user `rating`, which measures diagnosis acceptance.
       // They measure different constructs and should not be directly cross-tabulated

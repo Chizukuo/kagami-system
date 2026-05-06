@@ -17,7 +17,8 @@ export default function NativeVersion({ nativeVersions, lang, scene }: Props) {
 
   if (!nativeVersions || nativeVersions.length === 0) return null;
 
-  const current = nativeVersions[activeIndex];
+  const safeIndex = Math.min(activeIndex, nativeVersions.length - 1);
+  const current = nativeVersions[safeIndex];
   const fullText = current.sentences.join("");
 
   return (
@@ -28,7 +29,7 @@ export default function NativeVersion({ nativeVersions, lang, scene }: Props) {
         </span>
       </div>
       
-      <div className="flex flex-col gap-6 relative group">
+      <div className="flex flex-col gap-6 relative group" role="tabpanel" aria-labelledby={`native-tab-${activeIndex}`}>
         <div className="flex flex-col gap-3">
           {current.sentences.map((line, index) => (
             <p
@@ -45,12 +46,15 @@ export default function NativeVersion({ nativeVersions, lang, scene }: Props) {
         <div className="mt-4 flex flex-col items-center gap-6">
           <div className="flex items-center gap-4">
              {nativeVersions.length > 1 && (
-               <div className="flex p-1 bg-kg-bg-2 rounded-lg border border-kg-sep-2">
+               <div className="flex p-1 bg-kg-bg-2 rounded-lg border border-kg-sep-2" role="tablist" aria-label="Version variations">
                  {nativeVersions.map((v, i) => (
                    <button
                      key={i}
+                     id={`native-tab-${i}`}
+                     role="tab"
+                     aria-selected={i === activeIndex}
                      onClick={() => setActiveIndex(i)}
-                     className={`px-3 py-1 rounded-md text-[10px] font-mono font-bold uppercase transition-all ${
+                     className={`px-3 py-1 rounded-md text-[11px] font-mono font-bold uppercase transition-all ${
                        i === activeIndex
                          ? "bg-white text-kg-blue shadow-sm"
                          : "text-kg-text-4 hover:text-kg-text-2"

@@ -1,25 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { IssueFeedbackPayload, IssueLayer, IssueVote, ProficiencyLevel } from "@/lib/types";
-
-interface KvBinding {
-  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
-}
+import { IssueFeedbackPayload, IssueLayer, IssueVote } from "@/lib/types";
+import { KvBinding, sanitizeResId, normalizeProficiencyLevel, verifyResIdSignature } from "@/lib/api-utils";
 
 const VALID_LAYERS: IssueLayer[] = ["grammar", "register", "pragmatics"];
 const VALID_VOTES: IssueVote[] = ["agree", "disagree"];
-const VALID_PROFICIENCY_LEVELS: ProficiencyLevel[] = ["N5", "N4", "N3", "N2", "N1", "N1_PLUS", "NATIVE", "UNKNOWN"];
 const MAX_ISSUE_INDEX = 50;
-const MAX_RES_ID_LENGTH = 128;
 const MAX_ISSUE_ORIGINAL_LENGTH = 500;
 const MAX_ISSUE_TEXT_LENGTH = 1000;
-
-function sanitizeResId(resId: string): string {
-  return resId
-    .trim()
-    .slice(0, MAX_RES_ID_LENGTH)
-    .replace(/[^A-Za-z0-9_-]/g, "");
-}
 
 async function computeIssueHash(issueOriginal: string, issueText: string): Promise<string | undefined> {
   const combined = `${issueOriginal}\n${issueText}`.trim();
@@ -41,14 +29,6 @@ function isValidLayer(layer: unknown): layer is IssueLayer {
 
 function isValidVote(vote: unknown): vote is IssueVote {
   return typeof vote === "string" && VALID_VOTES.includes(vote as IssueVote);
-}
-
-function normalizeProficiencyLevel(value: unknown): ProficiencyLevel | undefined {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-  const normalized = value.toUpperCase() as ProficiencyLevel;
-  return VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : undefined;
 }
 
 export async function POST(req: NextRequest) {
@@ -79,6 +59,11 @@ export async function POST(req: NextRequest) {
     if (!safeResId) {
       return NextResponse.json({ error: "Invalid resId" }, { status: 400 });
     }
+
+    if (!(await verifyResIdSignature(safeResId, body._sig ?? ""))) {
+      return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
+    }
+
     const key = `issuefb_${safeResId}_${body.layer}_${issueIndex}`;
     const record: IssueFeedbackPayload = {
       resId: safeResId,
@@ -90,8 +75,8 @@ export async function POST(req: NextRequest) {
       issueOriginal,
       issueText,
       issueTextLength: issueText.length,
-      modelId: body.modelId,
-      sessionId: body.sessionId,
+      modelId: typeof body.modelId === "string" ? body.modelId.slice(0, 100).replace(/[^A-Za-z0-9\-._]/g, "") : "unknown",
+      sessionId: typeof body.sessionId === "string" ? body.sessionId.slice(0, 100) : "unknown",
       timestamp: new Date().toISOString(),
       lang: body.lang,
     };

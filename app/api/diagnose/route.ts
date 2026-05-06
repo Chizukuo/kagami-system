@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { diagnose } from "@/lib/diagnostics/registry";
 import { DiagnoseRequest, UILanguage } from "@/lib/types";
 import { isSupportedLanguage } from "@/lib/i18n";
+import { signResId } from "@/lib/api-utils";
 
 const MAX_TEXT_LENGTH = 2000;
 const MAX_SCENE_LENGTH = 200;
@@ -192,9 +193,12 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await diagnose(body.text, body.scene, lang, body.model);
+    const resId = createResId();
+    const sig = await signResId(resId);
     return NextResponse.json({
       ...result,
-      _resId: createResId(),
+      _resId: resId,
+      ...(sig ? { _sig: sig } : {}),
     });
   } catch (error) {
     const traceId = createResId();

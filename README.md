@@ -25,7 +25,7 @@ Chinese learners of Japanese frequently produce sentences that are grammatically
 
 A core challenge in Second Language Acquisition (SLA) research is measuring **metapragmatic awareness**: learners' ability to recognize and reason about pragmatic norms they may not yet produce consistently. Traditional assessment relies on Discourse Completion Tasks (DCTs) or think-aloud protocols, which are resource-intensive and difficult to scale.
 
-Kagami explores an alternative approach: using **LLM-generated layered diagnostics as a pragmatic stimulus**, then observing **how learners respond to each diagnostic layer** - Grammar, Register, and Pragmatics - as a scalable proxy for metapragmatic awareness. The hypothesis draws on Pienemann's *Teachability Hypothesis*: if pragmatic knowledge is acquired later and is cognitively more demanding, learners should systematically accept Grammar corrections more readily than Pragmatics corrections, producing a measurable **acceptance gradient** across the three layers.
+Kagami explores an alternative approach: using **LLM-generated layered diagnostics as a pragmatic stimulus**, then observing **how learners respond to each diagnostic layer** - Grammar, Register, and Pragmatics - as a scalable proxy for metapragmatic awareness. The hypothesis draws on Schmidt's *Noticing Hypothesis* (1990): if pragmatic knowledge is acquired later and is cognitively more demanding, learners should systematically accept Grammar corrections more readily than Pragmatics corrections, producing a measurable **acceptance gradient** across the three layers.
 
 ## 🧠 The Three-Layer Framework
 
@@ -50,11 +50,11 @@ Users input their Japanese text along with the specific **social context** (e.g.
 
 This project investigates a single focused research question:
 
-> **Do L2 learners' acceptance rates of LLM-generated diagnostics differ systematically across Grammar, Register, and Pragmatics layers - and does this gradient align with the predicted Teachability Hierarchy?**
+> **Do L2 learners' acceptance rates of LLM-generated diagnostics differ systematically across Grammar, Register, and Pragmatics layers - and does this gradient align with the predicted acceptance gradient?**
 
 Specifically, Kagami collects anonymous **per-issue binary feedback** (thumbs-up / thumbs-down) tagged by layer (Grammar / Register / Pragmatics). An optional free-text comment box is available for qualitative feedback.
 
-The per-issue data enables per-layer acceptance-rate analysis. A declining acceptance rate from Grammar -> Register -> Pragmatics would constitute evidence that learners' metapragmatic awareness lags behind grammatical knowledge, consistent with the Teachability Hierarchy.
+The per-issue data enables per-layer acceptance-rate analysis. A declining acceptance rate from Grammar -> Register -> Pragmatics would constitute evidence that learners' metapragmatic awareness lags behind grammatical knowledge, consistent with the predicted acceptance gradient.
 
 > [!IMPORTANT]
 > **Learner feedback is not ground truth.** Agree/disagree votes reflect diagnostic acceptance (learner cognition), not diagnostic accuracy (linguistic truth). Future work will introduce a native-speaker gold annotation set to enable three-way triangulation: LLM-vs-Gold, Learner-vs-Gold, and Learner-vs-LLM.

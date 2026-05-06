@@ -54,7 +54,7 @@ export default function InputForm({ onSubmit, isLoading, externalText, externalS
             className={`w-full min-h-[180px] p-5 pb-8 outline-none resize-none ${lang === 'zh' ? 'font-sans-zh' : 'font-sans-jp'} text-body antialiased text-kg-text placeholder-kg-text-4 bg-transparent leading-[1.625] tracking-[0.01em]`}
           />
           {/* Character count: only visible when user starts typing to reduce noise */}
-          <div className={`absolute bottom-3 right-4 transition-opacity duration-300 ${text.length > 0 ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`absolute bottom-3 right-4 transition-opacity duration-300 ${text.length > 0 ? 'opacity-100' : 'opacity-0'}`} aria-live="polite">
             <span className={`text-[13px] leading-none font-mono antialiased transition-colors ${text.length > 1800 ? 'text-kg-layer2 font-medium' : 'text-kg-text-4'}`}>
               {text.length} / 2000
             </span>

@@ -48,6 +48,7 @@ export interface DiagnosisResult {
   _inputScene?: string;
   _resId?: string;
   _modelId?: string;
+  _sig?: string;
 }
 
 export interface DiagnoseRequest {
@@ -59,6 +60,7 @@ export interface DiagnoseRequest {
 
 export interface IssueFeedbackPayload {
   resId: string;
+  _sig?: string;
   layer: IssueLayer;
   index: number;
   vote: IssueVote;
@@ -71,4 +73,13 @@ export interface IssueFeedbackPayload {
   sessionId?: string;
   timestamp: string;
   lang?: UILanguage;
+}
+
+export function getStoredProficiencyLevel(): ProficiencyLevel | undefined {
+  if (typeof window === "undefined") return undefined;
+  const val = localStorage.getItem(PROFICIENCY_STORAGE_KEY);
+  if (val && VALID_PROFICIENCY_LEVELS.includes(val as ProficiencyLevel)) {
+    return val as ProficiencyLevel;
+  }
+  return undefined;
 }

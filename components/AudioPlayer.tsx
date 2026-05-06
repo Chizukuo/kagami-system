@@ -32,6 +32,15 @@ export default function AudioPlayer({ text, scene, className = "" }: Props) {
     };
   }, [audioUrl]);
 
+  useEffect(() => {
+    if (audioUrl && isMounted.current) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+      setStatus("idle");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, scene]);
+
   const stopAllPlayback = () => {
     if (audioRef.current) {
       try {
@@ -125,21 +134,27 @@ export default function AudioPlayer({ text, scene, className = "" }: Props) {
         handlePlay();
       }}
       disabled={status === "loading"}
+      aria-label={status === "playing" ? "Stop" : "Listen"}
       className={`flex items-center justify-center w-8 h-8 rounded-full transition-all ${
-        status === "playing" 
-          ? "bg-kg-blue text-white shadow-sm" 
+        status === "playing"
+          ? "bg-kg-blue text-white shadow-sm"
           : "bg-kg-bg-2 text-kg-text-3 hover:text-kg-blue hover:bg-kg-blue/10"
       } ${className}`}
-      title={status === "playing" ? "Stop" : "Listen"}
     >
       {status === "loading" ? (
         <div className="w-3 h-3 border-2 border-kg-blue/30 border-t-kg-blue rounded-full animate-spin"></div>
       ) : status === "playing" ? (
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <svg aria-hidden="true" className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
           <rect x="6" y="6" width="12" height="12" rx="1" />
         </svg>
+      ) : status === "error" ? (
+        <svg aria-hidden="true" className="w-4 h-4 text-red-500 animate-[shake_0.5s_ease-in-out]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
       ) : (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
           <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
         </svg>
