@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Text too long (max ${MAX_TTS_LENGTH} characters)` }, { status: 400 });
     }
 
-    // Heuristic style extraction from scene
     let style = "neutral";
     const lowScene = (scene || "").toLowerCase();
     

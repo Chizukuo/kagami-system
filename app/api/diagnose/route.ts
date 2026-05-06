@@ -117,7 +117,7 @@ function getErrorStatusCode(payload: string) {
     return 429;
   }
   if (hasNumericStatusCode(payload, 404) || payload.includes("not found")) {
-    return 503;
+    return 503; // Upstream "model not found" is transient, not a client error.
   }
   if (hasNumericStatusCode(payload, 503) || payload.includes("unavailable")) {
     return 503;

@@ -12,37 +12,21 @@ export class GeminiTTSProvider extends BaseTTSProvider {
     this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
 
-  /**
-   * Encapsulates raw PCM data into a WAV container
-   */
+  /** Wrap raw PCM data in a WAV container. */
   private encodeWav(pcmBuffer: Buffer, sampleRate: number): Buffer {
     const header = Buffer.alloc(44);
-    
-    // RIFF identifier
     header.write("RIFF", 0);
-    // File length
     header.writeUInt32LE(36 + pcmBuffer.length, 4);
-    // RIFF type
     header.write("WAVE", 8);
-    // Format chunk identifier
     header.write("fmt ", 12);
-    // Format chunk length
     header.writeUInt32LE(16, 16);
-    // Sample format (1 is PCM)
-    header.writeUInt16LE(1, 20);
-    // Channel count (1 for mono)
-    header.writeUInt16LE(1, 22);
-    // Sample rate
+    header.writeUInt16LE(1, 20);         // PCM format
+    header.writeUInt16LE(1, 22);         // mono
     header.writeUInt32LE(sampleRate, 24);
-    // Byte rate (sampleRate * numChannels * bitsPerSample / 8)
-    header.writeUInt32LE(sampleRate * 1 * 2, 28);
-    // Block align (numChannels * bitsPerSample / 8)
-    header.writeUInt16LE(1 * 2, 32);
-    // Bits per sample
-    header.writeUInt16LE(16, 34);
-    // Data chunk identifier
+    header.writeUInt32LE(sampleRate * 1 * 2, 28);  // byte rate
+    header.writeUInt16LE(1 * 2, 32);     // block align
+    header.writeUInt16LE(16, 34);        // bits per sample
     header.write("data", 36);
-    // Data chunk length
     header.writeUInt32LE(pcmBuffer.length, 40);
 
     return Buffer.concat([header, pcmBuffer]);
@@ -82,9 +66,8 @@ export class GeminiTTSProvider extends BaseTTSProvider {
     const rawBuffer = Buffer.from(audioPart.inlineData.data, 'base64');
     const mimeType = audioPart.inlineData?.mimeType || "";
 
-    // If Gemini returns raw PCM (L16), wrap it in WAV
+    // Gemini may return raw L16 PCM instead of a container format — wrap in WAV.
     if (mimeType.includes("l16")) {
-      // Extract sample rate from mimeType if available, else default to 24000 (Gemini default)
       const rateMatch = mimeType.match(/rate=(\d+)/);
       const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
       

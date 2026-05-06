@@ -9,7 +9,6 @@ import { getI18n, isSupportedLanguage } from "@/lib/i18n";
 
 const MAX_LOG_LENGTH = 4000;
 
-// Flat icon for alerts
 const IconAlertCircle = ({ className = "w-4 h-4" }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={className}>
     <circle cx="12" cy="12" r="10"></circle>
@@ -106,6 +105,7 @@ export default function ClientPage() {
       }
 
       const data: ResultType = await res.json();
+      // Attach client-side context for feedback/evaluation endpoints.
       data._inputText = text;
       data._inputScene = scene;
       if (!data._resId) {

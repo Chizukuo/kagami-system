@@ -37,8 +37,7 @@ class DiagnosticRegistry {
         return false;
       }
     }
-    
-    // Default allow if no strict lists are defined
+
     return true;
   }
 
@@ -58,8 +57,7 @@ class DiagnosticRegistry {
         return false;
       }
     }
-    
-    // Default allow if no strict lists are defined
+
     return true;
   }
 
@@ -70,8 +68,7 @@ class DiagnosticRegistry {
     const isRandomGithub = requestedModel?.toLowerCase() === "random-github";
     const isAnyRandom = isRandom || isRandomGemini || isRandomGithub;
 
-    // Track which provider pool models came from so routing doesn't rely on model name substrings.
-    // e.g. "gemma-4-31b-it" in GEMINI_MODELS_WHITELIST should still route to Gemini.
+    // Track which pool a model came from so routing doesn't rely on model name substrings.
     let providerHint: "gemini" | "github" | null = null;
 
     let pool: string[] = [];
@@ -87,13 +84,12 @@ class DiagnosticRegistry {
       providerHint = "github";
     }
 
-    // Limit retries to 3 times or the total available models in the pool, whichever is smaller. At least 1 attempt.
+    // Cap retries at 3 to bound latency.
     const maxAttempts = isAnyRandom ? Math.max(1, Math.min(3, pool.length)) : 1;
     let attempts = 0;
     const attemptedModels: string[] = [];
     let lastError: unknown;
 
-    // For `random` mode (both providers), build a lookup to determine provider by model name.
     const geminiPoolSet = isRandom
       ? new Set((process.env.GEMINI_MODELS_WHITELIST || "").split(",").map(m => m.trim().toLowerCase()).filter(m => m.length > 0))
       : null;
@@ -107,10 +103,9 @@ class DiagnosticRegistry {
         if (available.length > 0) {
           resolvedModelId = available[Math.floor(Math.random() * available.length)];
         } else if (attempts === 1) {
-          // If pool is empty, let it fall through to default behavior, but only once
           resolvedModelId = undefined;
         } else {
-          break; // No more models to try
+          break;
         }
       }
 
@@ -118,8 +113,6 @@ class DiagnosticRegistry {
         attemptedModels.push(resolvedModelId);
       }
 
-      // Determine provider: use providerHint if set (random-gemini / random-github),
-      // otherwise use pool membership for `random`, or model name heuristic for explicit models.
       let provider: DiagnosticProvider;
       let providerId: "gemini" | "github" = "gemini";
 
@@ -128,6 +121,7 @@ class DiagnosticRegistry {
         effectiveHint = geminiPoolSet.has(resolvedModelId.toLowerCase()) ? "gemini" : "github";
       }
 
+      // Fallback heuristic: substring match. Fragile — providerHint is preferred.
       const useGemini = effectiveHint === "gemini"
         || (!effectiveHint && (!resolvedModelId || resolvedModelId.toLowerCase().includes("gemini") || resolvedModelId.toLowerCase().includes("gemma")));
 
@@ -140,7 +134,6 @@ class DiagnosticRegistry {
         provider = this.getGeminiProvider();
         providerId = "gemini";
       } else {
-        // Anything else is assumed to be a GitHub model (GPT, Llama, Mistral, etc.)
         if (resolvedModelId && !this.isGithubModelAllowed(resolvedModelId)) {
           if (!isAnyRandom) throw new Error(`Model '${resolvedModelId}' is not allowed by current configuration.`);
           lastError = new Error(`Model '${resolvedModelId}' is not allowed by current configuration.`);
@@ -149,8 +142,7 @@ class DiagnosticRegistry {
         try {
           provider = this.getGithubProvider();
         } catch (err) {
-          // GitHub provider construction fails if GITHUB_TOKEN is not set.
-          // In random mode, skip and try next model. In explicit mode, rethrow.
+          // GITHUB_TOKEN not set — skip in random mode, rethrow in explicit mode.
           if (!isAnyRandom) throw err;
           console.warn(`[DiagnosticRegistry] GitHub provider unavailable, skipping model '${resolvedModelId}':`, err);
           lastError = err;
@@ -162,8 +154,7 @@ class DiagnosticRegistry {
       try {
         const start = Date.now();
         const result = await provider.diagnose(text, scene, lang, resolvedModelId);
-        
-        // Inject model identifier for telemetry mapping
+
         result._modelId = resolvedModelId || (providerId === "gemini" ? (process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview") : "github-default");
         
         if (attempts > 1) {
@@ -175,7 +166,7 @@ class DiagnosticRegistry {
         console.error(`[DiagnosticRegistry] Provider '${providerId}' failed with model '${resolvedModelId || 'default'}':`, error);
         lastError = error;
         if (!isAnyRandom) {
-          break; // Do not retry if not in random mode
+          break;
         }
         if (attempts < maxAttempts) {
           console.log(`[DiagnosticRegistry] Upstream issue detected, automatically switching model and retrying...`);
@@ -189,6 +180,6 @@ class DiagnosticRegistry {
 
 export const diagnosticRegistry = new DiagnosticRegistry();
 
-// Keep backward compatibility for existing imports in case any remain
-export const diagnose = (text: string, scene: string, lang: UILanguage, model?: string) => 
+// Backward compat alias.
+export const diagnose = (text: string, scene: string, lang: UILanguage, model?: string) =>
   diagnosticRegistry.diagnose(text, scene, lang, model);

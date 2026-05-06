@@ -6,18 +6,14 @@ import { KvBinding, sanitizeResId, normalizeProficiencyLevel, verifyResIdSignatu
 interface EvalPayload {
   resId?: string;
   _sig?: string;
-  // Input
   inputText: string;
   inputScene: string;
-  // LLM output
   grammarCount: number;
   registerCount: number;
   pragmaticsCount: number;
   nativeVersion: string[] | string;
   summary: string;
-  // Human evaluation
-  // Legacy key naming: rating stores helpfulness acceptance, not truth-level accuracy.
-  // Optional since simplified widget no longer collects three-point ratings.
+  // Legacy: `rating` stores helpfulness acceptance, not truth-level accuracy.
   rating?: Rating;
   proficiencyLevel?: ProficiencyLevel;
   lang?: "zh" | "ja";
@@ -53,8 +49,8 @@ function normalizeNativeVersion(nativeVersion: string[] | string): string[] {
   if (typeof nativeVersion === "string") {
     return nativeVersion
       .split(/\r?\n+/)
-      .flatMap((line) => line.split(/(?<=[。！？!?])\s*/))
-      .map((line) => line.replace(/^[\-*・●\d.)\s]+/, "").trim())
+      .flatMap((line) => line.split(/(?<=[。！？!?])\s*/)) // Split on sentence boundaries
+      .map((line) => line.replace(/^[\-*・●\d.)\s]+/, "").trim()) // Strip list prefixes
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .slice(0, 30);
@@ -74,7 +70,6 @@ export async function POST(req: NextRequest) {
     const inputText = (body.inputText || "").trim().slice(0, 2000);
     const inputScene = (body.inputScene || "").trim().slice(0, 500);
 
-    // Validate required fields
     if (!inputText || !inputScene) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
@@ -111,13 +106,8 @@ export async function POST(req: NextRequest) {
       resId,
       modelId: (body.modelId || "unknown").slice(0, 100),
       sessionId: (body.sessionId || "unknown").slice(0, 100),
-      // severityLevel: LLM's assessment of input quality (issue count-based).
-      // This is NOT comparable to user `rating`, which measures diagnosis acceptance.
-      // They measure different constructs and should not be directly cross-tabulated
-      // without a gold annotation reference set.
       severityLevel,
       nativeVersion: nativeVersionLines.join("\n"),
-      // Sanitize optional fields
       proficiencyLevel: normalizeProficiencyLevel(body.proficiencyLevel),
       intentMismatch: body.intentMismatch ?? false,
       userCorrection: (body.userCorrection ?? "").trim().slice(0, 2000),

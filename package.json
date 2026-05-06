@@ -2,6 +2,8 @@
   "name": "kagami",
   "version": "0.1.0",
   "private": true,
+  "author": "Chizukuo <chizukuo@icloud.com>",
+  "license": "MIT",
   "scripts": {
     "build": "next build",
     "dev": "next dev",

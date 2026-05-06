@@ -23,7 +23,6 @@ class TTSRegistry {
   async generate(req: TTSRequest): Promise<TTSResponse> {
     const order = (process.env.TTS_FALLBACK_ORDER || "gemini,openai").split(",");
     
-    // Resolve active model (support random)
     let activeModel = process.env.ACTIVE_TTS_MODEL || "gemini-3.1-flash-tts-preview";
     if (activeModel === "random") {
       const whitelist = (process.env.GEMINI_TTS_MODELS_WHITELIST || "gemini-3.1-flash-tts-preview").split(",");
@@ -35,13 +34,11 @@ class TTSRegistry {
       const trimmedId = providerId.trim();
       try {
         if (trimmedId === "gemini") {
-          // Pass the dynamically selected model if we want to override the default
           return await this.getGemini().generate({ ...req, activeModel } as TTSRequest & { activeModel?: string });
         }
         if (trimmedId === "openai") {
           return await this.getOpenAI().generate(req);
         }
-        // 'local' is handled by the frontend, so we skip it here
       } catch (err) {
         console.error(`TTS provider ${trimmedId} failed:`, err as Error);
         lastError = err as Error;

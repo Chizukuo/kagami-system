@@ -26,7 +26,7 @@ export class GithubModelsProvider extends BaseProvider {
 
     const response = await this.client.chat.completions.create({
       model: modelName,
-      temperature: 0.2, // Low temperature for more deterministic diagnostic responses
+      temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: getSystemPrompt(lang) },

@@ -42,7 +42,6 @@ export default function NativeVersion({ nativeVersions, lang, scene }: Props) {
           ))}
         </div>
 
-        {/* Minimal Controls */}
         <div className="mt-4 flex flex-col items-center gap-6">
           <div className="flex items-center gap-4">
              {nativeVersions.length > 1 && (

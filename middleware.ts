@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
-const RATE_LIMIT_MAX = 10; // max requests per window per IP
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 10;
 
+// In-memory limiter — resets on cold start, does not sync across edge instances.
 const hits = new Map<string, { count: number; resetAt: number }>();
 
 function getClientIp(req: NextRequest): string {

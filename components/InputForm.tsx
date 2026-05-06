@@ -38,10 +38,8 @@ export default function InputForm({ onSubmit, isLoading, externalText, externalS
 
   return (
     <form onSubmit={handleFormSubmit} className="flex flex-col gap-6">
-      {/* Unified Input Card matching Apple's grouped style */}
       <div className={`bg-kg-bg border border-kg-sep rounded-2xl overflow-hidden transition-shadow shadow-sm focus-within:border-kg-blue focus-within:shadow-focus focus-within:ring-1 focus-within:ring-kg-blue ${isLoading ? 'opacity-50 pointer-events-none grayscale-[0.2]' : ''}`}>
-        
-        {/* Text Area Section */}
+
         <div className="relative flex flex-col">
           <textarea
             id="text"
@@ -53,7 +51,6 @@ export default function InputForm({ onSubmit, isLoading, externalText, externalS
             aria-label={t.input.textAria}
             className={`w-full min-h-[180px] p-5 pb-8 outline-none resize-none ${lang === 'zh' ? 'font-sans-zh' : 'font-sans-jp'} text-body antialiased text-kg-text placeholder-kg-text-4 bg-transparent leading-[1.625] tracking-[0.01em]`}
           />
-          {/* Character count: only visible when user starts typing to reduce noise */}
           <div className={`absolute bottom-3 right-4 transition-opacity duration-300 ${text.length > 0 ? 'opacity-100' : 'opacity-0'}`} aria-live="polite">
             <span className={`text-[13px] leading-none font-mono antialiased transition-colors ${text.length > 1800 ? 'text-kg-layer2 font-medium' : 'text-kg-text-4'}`}>
               {text.length} / 2000
@@ -61,10 +58,8 @@ export default function InputForm({ onSubmit, isLoading, externalText, externalS
           </div>
         </div>
 
-        {/* Subtle Divider inline to left padding */}
         <div className="h-px bg-kg-sep ml-5" />
 
-        {/* Scene Input Row like an iOS table row */}
         <div className="flex items-center relative group gap-3">
           <label htmlFor="scene" className={`pl-5 py-4 text-subhead font-medium ${lang === 'zh' ? 'font-sans-zh' : 'font-sans-jp'} tracking-tight text-kg-text-2 shrink-0 whitespace-nowrap select-none transition-colors group-focus-within:text-kg-blue`}>
             {t.input.sceneLabel}

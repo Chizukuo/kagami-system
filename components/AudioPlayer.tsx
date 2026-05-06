@@ -46,7 +46,7 @@ export default function AudioPlayer({ text, scene, className = "" }: Props) {
       try {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
-      } catch { /* ignore */ }
+      } catch { /* intentional stop */ }
     }
     if (window.speechSynthesis?.speaking) {
       window.speechSynthesis.cancel();

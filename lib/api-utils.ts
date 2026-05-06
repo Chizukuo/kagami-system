@@ -1,5 +1,6 @@
 import { ProficiencyLevel, VALID_PROFICIENCY_LEVELS } from "./types";
 
+/** Cloudflare KV binding interface used by all API routes. */
 export interface KvBinding {
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
   list(options?: { prefix?: string; cursor?: string; limit?: number }): Promise<KvListResult>;
@@ -33,7 +34,7 @@ export function normalizeProficiencyLevel(value: unknown): ProficiencyLevel | un
   return VALID_PROFICIENCY_LEVELS.includes(normalized) ? normalized : undefined;
 }
 
-// --- HMAC signing for feedback endpoint auth ---
+// HMAC-SHA256 signing to prevent forged feedback submissions.
 
 const SIGNING_SECRET = (process.env.KAGAMI_EXPORT_TOKEN ?? "").trim();
 
@@ -61,11 +62,10 @@ export async function signResId(resId: string): Promise<string | null> {
 }
 
 export async function verifyResIdSignature(resId: string, sig: string): Promise<boolean> {
-  if (!SIGNING_SECRET) return true; // no secret configured = skip verification
+  if (!SIGNING_SECRET) return true; // No secret configured — skip verification.
   if (!resId || !sig) return false;
   const expected = await signResId(resId);
   if (!expected) return false;
-  // Constant-time comparison
   if (expected.length !== sig.length) return false;
   let result = 0;
   for (let i = 0; i < expected.length; i++) {

@@ -1,8 +1,8 @@
 export interface TTSRequest {
   text: string;
   voice?: string;
-  style?: string; // e.g., 'polite', 'casual', 'excited'
-  activeModel?: string; // injected by registry when using 'random'
+  style?: string; // e.g. 'polite', 'casual'
+  activeModel?: string; // Set by registry in random mode
 }
 
 export interface TTSResponse {

@@ -113,13 +113,12 @@ export default function EvaluationWidget({
     );
   }
 
-  // Always show proficiency selector to allow users to change it
+  // Always show; toggle to A/B test proficiency collection.
   const showProficiency = true;
 
   return (
     <div className="border-t border-kg-sep-2 pt-8 pb-6 animate-fade-in-up">
       <div className="max-w-2xl mx-auto px-4 flex flex-col gap-5">
-        {/* Gentle prompt */}
         <p className="text-footnote text-kg-text-4 font-sans-zh text-center">
           {t.evaluation.prompt}
         </p>
@@ -131,7 +130,6 @@ export default function EvaluationWidget({
           </div>
         )}
 
-        {/* Proficiency selector — only shown if not already stored */}
         {showProficiency && (
           <div className="flex flex-col gap-2">
             <label htmlFor="eval-proficiency" className="text-footnote font-sans-zh text-kg-text-3 font-medium uppercase tracking-wider">{t.evaluation.proficiencyLabel}</label>
@@ -161,7 +159,6 @@ export default function EvaluationWidget({
           </div>
         )}
 
-        {/* Optional feedback textarea */}
         <div className="flex flex-col gap-2">
           <label htmlFor="eval-feedback" className="text-footnote font-sans-zh text-kg-text-3 font-medium uppercase tracking-wider">{t.evaluation.feedbackLabel}</label>
           <textarea
@@ -175,7 +172,6 @@ export default function EvaluationWidget({
           />
         </div>
 
-        {/* Submit + consent */}
         <div className="flex flex-col gap-3 transition-all duration-300">
           <button
             onClick={submitFeedback}

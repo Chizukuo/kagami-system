@@ -25,7 +25,6 @@ export default function DiagnosisResult({ result, lang }: Props) {
 
   return (
     <div className="w-full flex flex-col pt-4">
-      {/* Summary */}
       <div className={`mb-6 p-6 ${severity.bg} border ${severity.border} rounded-xl`}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-caption uppercase tracking-widest font-bold text-(--kg-blue-text) font-mono">{t.result.summaryTitle}</h3>
@@ -44,16 +43,13 @@ export default function DiagnosisResult({ result, lang }: Props) {
         </div>
       </div>
 
-      {/* Native Output elevated to the top! */}
       <NativeVersion nativeVersions={result.native_versions} lang={lang} scene={result._inputScene} />
 
-      {/* Details Section - Full prominence */}
       <div className="mt-8 flex flex-col gap-6">
         <h2 className="text-[17px] font-display-zh font-bold text-kg-text pb-3 border-b border-kg-sep text-center">
           {t.result.detailsTitle}
         </h2>
 
-        {/* Layers */}
         <LayerSection
           key={`${result._resId}-grammar`}
           title={t.result.grammarTitle}
@@ -94,7 +90,6 @@ export default function DiagnosisResult({ result, lang }: Props) {
         />
       </div>
 
-      {/* Evaluation Widget - Shifted to the end for progressive read flow */}
       <div className="mt-12">
         <EvaluationWidget
           resId={result._resId ?? ""}
