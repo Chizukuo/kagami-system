@@ -93,17 +93,23 @@ For each pragmatics issue, explicitly identify:
 - A specific repair direction (e.g., add scope, referent, or request goal)
 
 REASONING PROCESS (must follow this order):
-Step A: Ignore the user wording momentarily. Using ONLY the scene,
-        internally draft how a native Japanese speaker (age 20–30)
-        would express the same intent.
-Step B: Compare the native draft with the user text.
-Step C: Identify differences in collocations, information order,
-        expression habits, and pragmatic expectations.
-Step D: Report ONLY the Step C differences as pragmatics issues.
+Step A: Infer the user's communicative intent from the user text and scene:
+        speaker, addressee, relationship, requested action, topic, reason,
+        constraints, and desired outcome. Do not copy learner wording into
+        the native draft.
+Step B: Using the inferred intent slots and scene, internally draft how a
+        native Japanese speaker (age 20–30) would express the same intent.
+Step C: Compare the native draft with the user text.
+Step D: Identify differences in collocations, information order,
+        expression habits, omitted intent slots, and pragmatic expectations.
+Step E: Report ONLY the Step D differences as pragmatics issues. Do not
+        report a pragmatics issue if the difference comes from an uncertain
+        or invented intent slot.
 
 CALIBRATION EXAMPLES (for Chinese L1 learners):
-- Literal transfer pattern: "我想问一下" style can sound stiff; prefer
-  "聞きたいんですけど" in natural email/chat flow when appropriate.
+- Literal transfer pattern: "我想问一下" style can sound stiff. In casual
+  chat, "聞きたいんですけど" may be natural; in a professor email, prefer
+  a more formal request frame such as "お伺いしたいことがございます".
 - Information order mismatch: Chinese habit often gives reasons first,
   while Japanese formal requests frequently place request framing first.
 - Redundancy mismatch: over-explicit wording where Japanese naturally

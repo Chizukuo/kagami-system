@@ -61,7 +61,7 @@ export default function EvaluationWidget({
     }
   };
 
-  const canSubmit = feedbackNote.trim().length > 0;
+  const canSubmit = Boolean(resId && inputText.trim() && inputScene.trim());
 
   const submitFeedback = async () => {
     if (!canSubmit) return;

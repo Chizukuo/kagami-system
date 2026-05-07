@@ -29,20 +29,37 @@ export default function LayerSection({
   const submitIssueFeedback = async (index: number, vote: IssueVote, original: string, issue: string) => {
     const key = getVoteKey(index);
     if (votes[key] === vote) return;
+    const previousVote = votes[key];
     setVotes((prev) => ({ ...prev, [key]: vote }));
 
     try {
-      await fetch("/api/issue-feedback", {
+      const res = await fetch("/api/issue-feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          resId, modelId, issueIndex: index, vote, original, issue,
-          layer: layerType, sessionId: getClientSessionId(),
-          userProficiency: getStoredProficiencyLevel(),
+          resId,
           _sig: sig,
+          layer: layerType,
+          index,
+          vote,
+          proficiencyLevel: getStoredProficiencyLevel(),
+          issueOriginal: original,
+          issueText: issue,
+          modelId,
+          sessionId: getClientSessionId(),
+          lang,
         }),
       });
+      if (!res.ok) {
+        throw new Error(`Issue feedback failed with HTTP ${res.status}`);
+      }
     } catch (err) {
+      setVotes((prev) => {
+        const next = { ...prev };
+        if (previousVote) next[key] = previousVote;
+        else delete next[key];
+        return next;
+      });
       console.error("Failed to submit issue feedback:", err);
     }
   };
