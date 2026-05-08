@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const iconVersion = "20260508-3";
+
 export const metadata: Metadata = {
   title: "Kagami 鏡 — 日语自然度诊断系统 | AI 驱动的语用分析工具",
   description: "专为中文学习者设计的日语诊断工具。从语法、语体、语用三层深度分析，提供地道日语修版建议。",
+  manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: `/favicon.ico?v=${iconVersion}`, sizes: "any" },
       { url: "/kagami-logo.svg", type: "image/svg+xml" },
     ],
-    apple: "/apple-touch-icon.png",
+    shortcut: `/favicon.ico?v=${iconVersion}`,
+    apple: [{ url: `/apple-touch-icon.png?v=${iconVersion}`, sizes: "180x180", type: "image/png" }],
   },
 };
 
